@@ -10,7 +10,7 @@ This repository contains the code for the PAMI 2023 paper [TransFuser: Imitation
 
 If you find our code or papers useful, please cite:
 
-```bibtex
+```bibtexV
 @article{Chitta2023PAMI,
   author = {Chitta, Kashyap and
             Prakash, Aditya and
