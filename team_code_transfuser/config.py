@@ -50,6 +50,8 @@ class GlobalConfig:
 
     backbone = 'transFuser'
 
+    backbone_path = 'mlp'
+    
     # CenterNet parameters
     num_dir_bins = 12
     fp16_enabled = False
@@ -202,6 +204,14 @@ class GlobalConfig:
     brake_ratio = 1.1 # ratio of speed to desired speed at which brake is triggered
     clip_delta = 0.25 # maximum change in speed input to logitudinal controller
     clip_throttle = 0.75 # Maximum throttle allowed by the controller
+
+    ## DiffusionDrive
+    num_poses = 8 # Number of poses in the trajectory
+    tf_d_model = 512 # Transformer model dimensionality
+    tf_d_ffn = 1024
+    plan_anchor_path = "/home/users/bencheng.liao/PlanWrapper/playground/visualization/kmeans_navsim_traj_20.npy"
+
+
 
     def __init__(self, root_dir='', setting='all', **kwargs):
         self.root_dir = root_dir

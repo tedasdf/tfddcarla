@@ -71,7 +71,7 @@ class LeaderboardEvaluator(object):
         self.statistics_manager = statistics_manager
         self.sensors = None
         self.sensor_icons = []
-        self._vehicle_lights = carla.VehicleLightState.Position | carla.VehicleLightState.LowBeam
+        self._vehicle_lights = carla.VehicleLightState.Position | carla.VehicleLightState.LowBeam #(bit return int)
 
         # First of all, we need to create the client that will send the requests
         # to the simulator. Here we'll assume the simulator is accepting
@@ -403,7 +403,7 @@ class LeaderboardEvaluator(object):
             self.statistics_manager.clear_record(args.checkpoint)
             route_indexer.save_state(args.checkpoint)
 
-        while route_indexer.peek():
+        while route_indexer.peek(): # while loop until all routes
             # setup
             config = route_indexer.next()
 

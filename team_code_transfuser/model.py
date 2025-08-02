@@ -1,7 +1,10 @@
 from collections import deque
+from DiffusionDrive.navsim.agents.diffusiondrive.transfuser_model_v2 import TrajectoryHead
 import torch.nn.functional as F
 import cv2
 
+from path_gen.og import GRUDecoder
+from transfuser.team_code_transfuser.path_gen.diffusiondrive.modules.blocks import linear_relu_ln
 from utils import *
 from transfuser import TransfuserBackbone, SegDecoder, DepthDecoder
 from geometric_fusion import GeometricFusionBackbone
@@ -542,7 +545,7 @@ class LidarCenterNet(nn.Module):
         in_channels: input channels
     """
 
-    def __init__(self, config, device, backbone, image_architecture='resnet34', lidar_architecture='resnet18', use_velocity=True):
+    def __init__(self, config, device, backbone, backbone_path, image_architecture='resnet34', lidar_architecture='resnet18', use_velocity=True):
         super().__init__()
         self.device = device
         self.config = config
@@ -560,6 +563,18 @@ class LidarCenterNet(nn.Module):
 
         self.backbone = backbone
 
+        self._query_splits = [
+            1,
+            30,
+        ]
+
+        self._keyval_embedding = nn.Embedding(8**2 + 1, config.tf_d_model)  # 8x8 feature grid + trajectory
+        self._query_embedding = nn.Embedding(sum(self._query_splits), config.tf_d_model)
+
+        self.bev_proj = nn.Sequential(
+            *linear_relu_ln(256, 1, 1,320),
+        )
+        self._tf_decoder = nn.TransformerDecoder(tf_decoder_layer, config.tf_num_layers)
 
         if(backbone == 'transFuser'):
             self._model = TransfuserBackbone(config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
@@ -598,11 +613,25 @@ class LidarCenterNet(nn.Module):
                             nn.ReLU(inplace=True),
                         ).to(self.device)
 
-        self.decoder = nn.GRUCell(input_size=4 if self.gru_concat_target_point else 2, # 2 represents x,y coordinate
-                                  hidden_size=self.config.gru_hidden_size).to(self.device)
+        # gru decoder
+        self.backbone_path = backbone_path
+        if backbone_path == "mlp": # GRU OG
+            self.path_out = GRUDecoder(
+                self.config.gru_hidden_size,self.gru_concat_target_point,self.device
+            )
+        elif backbone_path == "diffusiondrive":
+            print("Not yet implemented")
+            # self.path_out = TrajectoryHead(
+            #     num_poses=,
+            #     d_ffn=,
+            #     d_model=,
+            #     plan_anchor_path=,
+            #     config=,
+            # )
+
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.output = nn.Linear(self.config.gru_hidden_size, 3).to(self.device)
+        
 
         # pid controller
         self.turn_controller = PIDController(K_P=config.turn_KP, K_I=config.turn_KI, K_D=config.turn_KD, n=config.turn_n)
@@ -626,8 +655,9 @@ class LidarCenterNet(nn.Module):
             else:
                 x_in = x
             
-            z = self.decoder(x_in, z)
-            dx = self.output(z)
+            dx = self.path_out(x_in, z)
+            # z = self.decoder(x_in, z)
+            # dx = self.output(z)
             
             x = dx[:,:2] + x
             
@@ -702,8 +732,9 @@ class LidarCenterNet(nn.Module):
             features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel)
         else:
             raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
-
-        pred_wp, _, _, _, _ = self.forward_gru(fused_features, target_point)
+        
+        if self.backbone_path == "mlp":
+            pred_wp, _, _, _, _ = self.forward_gru(fused_features, target_point)
 
         preds = self.head([features[0]])
         results = self.head.get_bboxes(preds[0], preds[1], preds[2], preds[3], preds[4], preds[5], preds[6])
@@ -730,7 +761,9 @@ class LidarCenterNet(nn.Module):
 
         return pred_wp, rotated_bboxes
 
-    def forward(self, rgb, lidar_bev, ego_waypoint, target_point, target_point_image, ego_vel, bev, label, depth, semantic, num_points=None, save_path=None, bev_points=None, cam_points=None):
+    def forward(self, rgb, lidar_bev, ego_waypoint, target_point, target_point_image, 
+                ego_vel, bev, label, depth, semantic, num_points=None, save_path=None, 
+                bev_points=None, cam_points=None):
         loss = {}
 
         if(self.use_point_pillars == True):
@@ -752,8 +785,55 @@ class LidarCenterNet(nn.Module):
         else:
             raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
 
+        if self.backbone_path == "mlp":
 
-        pred_wp, _, _, _, _ = self.forward_gru(fused_features, target_point)
+            pred_wp, _, _, _, _ = self.forward_gru(fused_features, target_point)
+            loss_wp = torch.mean(torch.abs(pred_wp - ego_waypoint))
+            
+        elif self.backbone_path == "diffusiondrive":
+            print(None) 
+            # TODO: Implement the diffusion drive path prediction here
+
+            # need target
+            # need status_feature
+            # 
+            batch_size = status_feature.shape[0]
+            cross_bev_feature = features
+            bev_spatial_shape = features
+            concat_cross_bev_shape = fused_features.shape[2:]
+            bev_feature = self._bev_downscale(fused_features).flatten(-2, -1)
+            bev_feature = fused_features.permute(0, 2, 1)
+            status_encoding = self._status_encoding(status_feature)
+
+            keyval = torch.concatenate([bev_feature, status_encoding[:, None]], dim=1)
+            keyval += self._keyval_embedding.weight[None, ...]
+
+            concat_cross_bev = keyval[:,:-1].permute(0,2,1).contiguous().view(batch_size, -1, concat_cross_bev_shape[0], concat_cross_bev_shape[1])
+            # upsample to the same shape as bev_feature_upscale
+
+            concat_cross_bev = F.interpolate(concat_cross_bev, size=bev_spatial_shape, mode='bilinear', align_corners=False)
+            # concat concat_cross_bev and cross_bev_feature
+            cross_bev_feature = torch.cat([concat_cross_bev, cross_bev_feature], dim=1)
+
+            cross_bev_feature = self.bev_proj(cross_bev_feature.flatten(-2,-1).permute(0,2,1))
+            cross_bev_feature = cross_bev_feature.permute(0,2,1).contiguous().view(batch_size, -1, bev_spatial_shape[0], bev_spatial_shape[1])
+            query = self._query_embedding.weight[None, ...].repeat(batch_size, 1, 1)
+            query_out = self._tf_decoder(query, keyval)
+
+            trajectory_query, agents_query = query_out.split(self._query_splits, dim=1)
+
+
+            loss_wp = self.path_out(
+                trajectory_query, 
+                agents_query, 
+                bev_feature,
+                bev_spatial_shape,
+                status_encoding[:, None],
+                targets,
+                None
+            ) # {"trajectory": best_reg,"trajectory_loss":ret_traj_loss,"trajectory_loss_dict":trajectory_loss_dict}
+
+
 
         # pred topdown view
         pred_bev = self.pred_bev(features[0])
@@ -762,7 +842,7 @@ class LidarCenterNet(nn.Module):
         weight = torch.from_numpy(np.array([1., 1., 3.])).to(dtype=torch.float32, device=pred_bev.device)
         loss_bev = F.cross_entropy(pred_bev, bev, weight=weight).mean()
 
-        loss_wp = torch.mean(torch.abs(pred_wp - ego_waypoint))
+       
         loss.update({
             "loss_wp": loss_wp,
             "loss_bev": loss_bev

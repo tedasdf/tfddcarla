@@ -96,7 +96,7 @@ class ScenarioManager(object):
         self.end_system_time = None
         self.end_game_time = None
 
-    def load_scenario(self, scenario, agent, rep_number):
+    def load_scenario(self, scenario, agent, rep_number): # include loading the model too 
         """
         Load a new scenario
         """

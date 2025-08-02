@@ -1,0 +1,3 @@
+-r team_code_transfuser/requirements.txt
+mmsegmentation==0.25.0
+mmdet==2.25.0

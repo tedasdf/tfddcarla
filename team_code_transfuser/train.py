@@ -125,7 +125,7 @@ def main():
         config.detailed_losses_weights[index_bev] = 0.0
 
     # Create model and optimizers
-    model = LidarCenterNet(config, device, args.backbone, args.image_architecture, args.lidar_architecture, bool(args.use_velocity))
+    model = LidarCenterNet(config, device, args.backbone, 'transfuser/model_ckpt/models_2022/transfuser/model_seed1_39.pth', args.image_architecture, args.lidar_architecture, bool(args.use_velocity))
 
     if (parallel == True):
         # Synchronizing the Batch Norms increases the Batch size with which they are compute by *num_gpus

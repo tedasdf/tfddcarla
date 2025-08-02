@@ -29,6 +29,7 @@ class TransfuserBackbone(nn.Module):
 
         if(self.config.use_target_point_image == True):
             in_channels += 1
+        
 
         self.lidar_encoder = LidarEncoder(architecture=lidar_architecture, in_channels=in_channels,
                                           out_features=self.config.perception_output_features)
@@ -89,7 +90,7 @@ class TransfuserBackbone(nn.Module):
                             resid_pdrop=config.resid_pdrop,
                             config=config, use_velocity=use_velocity)
 
-        if(self.image_encoder.features.feature_info[4]['num_chs'] != self.config.perception_output_features):
+        if(self.image_encoder.features.feature_info[4]['num_chs'] != self.config.perception_output_features): # if the !=== 512
             self.change_channel_conv_image = nn.Conv2d(self.image_encoder.features.feature_info[4]['num_chs'], self.config.perception_output_features, (1, 1))
             self.change_channel_conv_lidar = nn.Conv2d(self.image_encoder.features.feature_info[4]['num_chs'], self.config.perception_output_features, (1, 1))
         else:
@@ -192,6 +193,7 @@ class TransfuserBackbone(nn.Module):
         lidar_features_layer4 = F.interpolate(lidar_features_layer4, size=(lidar_features.shape[2],lidar_features.shape[3]), mode='bilinear', align_corners=False)
         image_features = image_features + image_features_layer4
         lidar_features = lidar_features + lidar_features_layer4
+        # done fusing function 
 
         # Downsamples channels to 512
         image_features = self.change_channel_conv_image(image_features)
