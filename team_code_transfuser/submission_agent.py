@@ -197,6 +197,12 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         gps = input_data['gps'][1][:2]
         speed = input_data['speed'][1]['speed']
         compass = input_data['imu'][1][-1]
+        imu_data = input_data['imu'][1]
+
+        accel_x = imu_data[0]
+        accel_y = imu_data[1]
+        accel_z = imu_data[2]
+        acceleration = [accel_x, accel_y, accel_z]
         if (np.isnan(compass) == True): # CARLA 0.9.10 occasionally sends NaN values in the compass
             compass = 0.0
 
@@ -205,6 +211,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                 'gps': gps,
                 'speed': speed,
                 'compass': compass,
+                'acceleration': acceleration
                 }
 
         if (self.backbone != 'latentTF'):
@@ -277,6 +284,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         gt_velocity = torch.FloatTensor([tick_data['speed']]).to('cuda', dtype=torch.float32) # used by controller
         velocity = gt_velocity.reshape(1, 1) # used by transfuser
 
+        acceleration = tick_data['acceleration']
+
         # unblock
         is_stuck = False
         # divide by 2 because we process every second frame
@@ -294,7 +303,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             for i in range(self.model_count):
                 rotated_bb = []
                 if (self.backbone == 'transFuser'):
-                    pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity,
+                    pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
                                                           num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,
                                                           forced_move=is_stuck, debug=self.config.debug, rgb_back=self.rgb_back)
                 elif (self.backbone == 'late_fusion'):
@@ -317,6 +326,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
 
                 pred_wps.append(pred_wp)
                 bounding_boxes.append(rotated_bb)
+        return 
 
         bbs_vehicle_coordinate_system = self.non_maximum_suppression(bounding_boxes, self.iou_treshold_nms)
 

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import functools
 from typing import Callable, Optional
 from torch import Tensor
-from navsim.agents.diffusiondrive.transfuser_config import TransfuserConfig
+# from path_gen.diffusiondrive.transfuser_config import TransfuserConfig
 # from mmcv.ops import sigmoid_focal_loss as _sigmoid_focal_loss
 # from mmdet.models.losses import FocalLoss
 
@@ -115,12 +115,14 @@ def py_sigmoid_focal_loss(pred,
 
 
 class LossComputer(nn.Module):
-    def __init__(self,config: TransfuserConfig):
+    def __init__(self,config):
         self._config = config
         super(LossComputer, self).__init__()
         # self.focal_loss = FocalLoss(use_sigmoid=True, gamma=2.0, alpha=0.25, reduction='mean', loss_weight=1.0, activated=False)
-        self.cls_loss_weight = config.trajectory_cls_weight
-        self.reg_loss_weight = config.trajectory_reg_weight
+        # self.cls_loss_weight = config.trajectory_cls_weight
+        # self.reg_loss_weight = config.trajectory_reg_weight
+        self.cls_loss_weight = 10.0
+        self.reg_loss_weight = 8.0
     def forward(self, poses_reg, poses_cls, targets, plan_anchor):
         """
         pred_traj: (bs, 20, 8, 3)

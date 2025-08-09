@@ -1,10 +1,11 @@
 from collections import deque
-from DiffusionDrive.navsim.agents.diffusiondrive.transfuser_model_v2 import TrajectoryHead
+from path_gen.diffusiondrive.transfuser_model_v2 import TrajectoryHead
 import torch.nn.functional as F
 import cv2
+import math
 
 from path_gen.og import GRUDecoder
-from transfuser.team_code_transfuser.path_gen.diffusiondrive.modules.blocks import linear_relu_ln
+from path_gen.diffusiondrive.modules.blocks import linear_relu_ln
 from utils import *
 from transfuser import TransfuserBackbone, SegDecoder, DepthDecoder
 from geometric_fusion import GeometricFusionBackbone
@@ -12,7 +13,7 @@ from late_fusion import LateFusionBackbone
 from latentTF import latentTFBackbone
 from copy import deepcopy
 from point_pillar import PointPillarNet
-
+import time
 
 from PIL import Image, ImageFont, ImageDraw
 from torchvision import models
@@ -28,10 +29,12 @@ from mmdet.core import multi_apply
 from mmdet.models import HEADS, build_loss
 from mmdet.models.utils import gaussian_radius, gen_gaussian_target
 from mmdet.models.utils.gaussian_target import (get_local_maximum, get_topk_from_heatmap,
-                                     transpose_and_gather_feat)
+                                                transpose_and_gather_feat)
 from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
 from mmdet.models.dense_heads.dense_test_mixins import BBoxTestMixin
 
+# custom imports
+import path_visualiser
 
 @HEADS.register_module()
 class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
@@ -58,7 +61,8 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
                  in_channel,
                  feat_channel,
                  num_classes,
-                 loss_center_heatmap=dict(type='GaussianFocalLoss', loss_weight=1.0),
+                 loss_center_heatmap=dict(
+                     type='GaussianFocalLoss', loss_weight=1.0),
                  loss_wh=dict(type='L1Loss', loss_weight=0.1),
                  loss_offset=dict(type='L1Loss', loss_weight=1.0),
                  loss_dir_class=dict(type='CrossEntropyLoss', loss_weight=1.0),
@@ -75,7 +79,8 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
         self.wh_head = self._build_head(in_channel, feat_channel, 2)
         self.offset_head = self._build_head(in_channel, feat_channel, 2)
         self.num_dir_bins = train_cfg.num_dir_bins
-        self.yaw_class_head = self._build_head(in_channel, feat_channel, self.num_dir_bins)
+        self.yaw_class_head = self._build_head(
+            in_channel, feat_channel, self.num_dir_bins)
         self.yaw_res_head = self._build_head(in_channel, feat_channel, 1)
         self.velocity_head = self._build_head(in_channel, feat_channel, 1)
         self.brake_head = self._build_head(in_channel, feat_channel, 2)
@@ -103,12 +108,14 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
 
     def init_weights(self):
         """Initialize weights of the head."""
-        bias_init = bias_init_with_prob(self.train_cfg.center_net_bias_init_with_prob)
+        bias_init = bias_init_with_prob(
+            self.train_cfg.center_net_bias_init_with_prob)
         self.heatmap_head[-1].bias.data.fill_(bias_init)
         for head in [self.wh_head, self.offset_head]:
             for m in head.modules():
                 if isinstance(m, nn.Conv2d):
-                    normal_init(m, std=self.train_cfg.center_net_normal_init_std)
+                    normal_init(
+                        m, std=self.train_cfg.center_net_normal_init_std)
 
     def forward(self, feats):
         """Forward features. Notice CenterNet head does not use FPN.
@@ -185,7 +192,8 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
                 - loss_wh (Tensor): loss of hw heatmap
                 - loss_offset (Tensor): loss of offset heatmap.
         """
-        assert len(center_heatmap_preds) == len(wh_preds) == len(offset_preds) == 1
+        assert len(center_heatmap_preds) == len(
+            wh_preds) == len(offset_preds) == 1
         center_heatmap_pred = center_heatmap_preds[0]
         wh_pred = wh_preds[0]
         offset_pred = offset_preds[0]
@@ -196,7 +204,7 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
 
         target_result, avg_factor = self.get_targets(gt_bboxes, gt_labels, gt_bboxes_ignore,
                                                      center_heatmap_pred.shape)
-        
+
         center_heatmap_target = target_result['center_heatmap_target']
         wh_target = target_result['wh_target']
         yaw_class_target = target_result['yaw_class_target']
@@ -263,10 +271,12 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
         angle = angle % (2 * np.pi)
         angle_per_class = 2 * np.pi / float(self.num_dir_bins)
         shifted_angle = (angle + angle_per_class / 2) % (2 * np.pi)
-        #NOTE changed this to not trigger a warning anymore. Rounding trunc should be the same as floor as long as angle is positive.
+        # NOTE changed this to not trigger a warning anymore. Rounding trunc should be the same as floor as long as angle is positive.
         # I kept it trunc to not change the behavior and keep backwards compatibility. When training a new model "floor" might be the better option.
-        angle_cls = torch.div(shifted_angle, angle_per_class, rounding_mode="trunc")
-        angle_res = shifted_angle - (angle_cls * angle_per_class + angle_per_class / 2)
+        angle_cls = torch.div(
+            shifted_angle, angle_per_class, rounding_mode="trunc")
+        angle_res = shifted_angle - \
+            (angle_cls * angle_per_class + angle_per_class / 2)
         return angle_cls.long(), angle_res
 
     def class2angle(self, angle_cls, angle_res, limit_period=True):
@@ -317,11 +327,12 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
             [bs, self.num_classes, feat_h, feat_w])
         wh_target = gt_bboxes[-1].new_zeros([bs, 2, feat_h, feat_w])
         offset_target = gt_bboxes[-1].new_zeros([bs, 2, feat_h, feat_w])
-        yaw_class_target = gt_bboxes[-1].new_zeros([bs, 1, feat_h, feat_w]).long()
+        yaw_class_target = gt_bboxes[-1].new_zeros(
+            [bs, 1, feat_h, feat_w]).long()
         yaw_res_target = gt_bboxes[-1].new_zeros([bs, 1, feat_h, feat_w])
         velocity_target = gt_bboxes[-1].new_zeros([bs, 1, feat_h, feat_w])
         brake_target = gt_bboxes[-1].new_zeros([bs, 1, feat_h, feat_w]).long()
- 
+
         wh_offset_target_weight = gt_bboxes[-1].new_zeros(
             [bs, 2, feat_h, feat_w])
 
@@ -342,24 +353,27 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
                 ctx, cty = ct
                 scale_box_h = gt_bbox[j, 3] * height_ratio
                 scale_box_w = gt_bbox[j, 2] * width_ratio
-                
-                radius = gaussian_radius([scale_box_h, scale_box_w], min_overlap=0.1)
+
+                radius = gaussian_radius(
+                    [scale_box_h, scale_box_w], min_overlap=0.1)
                 radius = max(2, int(radius))
                 ind = gt_label[j].long()
-                
-                gen_gaussian_target(center_heatmap_target[batch_id, ind], [ctx_int, cty_int], radius)
+
+                gen_gaussian_target(center_heatmap_target[batch_id, ind], [
+                                    ctx_int, cty_int], radius)
 
                 wh_target[batch_id, 0, cty_int, ctx_int] = scale_box_w
                 wh_target[batch_id, 1, cty_int, ctx_int] = scale_box_h
-                
+
                 yaw_class, yaw_res = self.angle2class(gt_bbox[j, 4])
 
                 yaw_class_target[batch_id, 0, cty_int, ctx_int] = yaw_class
                 yaw_res_target[batch_id, 0, cty_int, ctx_int] = yaw_res
 
                 velocity_target[batch_id, 0, cty_int, ctx_int] = gt_bbox[j, 5]
-                brake_target[batch_id, 0, cty_int, ctx_int] = gt_bbox[j, 6].long()
-                 
+                brake_target[batch_id, 0, cty_int,
+                             ctx_int] = gt_bbox[j, 6].long()
+
                 offset_target[batch_id, 0, cty_int, ctx_int] = ctx - ctx_int
                 offset_target[batch_id, 1, cty_int, ctx_int] = cty - cty_int
                 wh_offset_target_weight[batch_id, :, cty_int, ctx_int] = 1
@@ -382,7 +396,7 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
                    offset_preds,
                    yaw_class_preds,
                    yaw_res_preds,
-                   velocity_preds, 
+                   velocity_preds,
                    brake_preds,
                    rescale=True,
                    with_nms=False):
@@ -410,7 +424,8 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
                 each element represents the class label of the corresponding
                 box.
         """
-        assert len(center_heatmap_preds) == len(wh_preds) == len(offset_preds) == 1
+        assert len(center_heatmap_preds) == len(
+            wh_preds) == len(offset_preds) == 1
 
         batch_det_bboxes, batch_labels = self.decode_heatmap(
             center_heatmap_preds[0],
@@ -418,7 +433,7 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
             offset_preds[0],
             yaw_class_preds[0],
             yaw_res_preds[0],
-            velocity_preds[0], 
+            velocity_preds[0],
             brake_preds[0],
             k=self.train_cfg.top_k_center_keypoints,
             kernel=self.train_cfg.center_net_max_pooling_kernel)
@@ -486,13 +501,14 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
         yaw_class = torch.argmax(yaw_class, -1)
         yaw = self.class2angle(yaw_class, yaw_res.squeeze(2))
         # speed
-        
+
         topk_xs = topk_xs + offset[..., 0]
         topk_ys = topk_ys + offset[..., 1]
 
         ratio = 4.
 
-        batch_bboxes = torch.stack([topk_xs, topk_ys, wh[..., 0], wh[..., 1], yaw, velocity, brake], dim=2)
+        batch_bboxes = torch.stack(
+            [topk_xs, topk_ys, wh[..., 0], wh[..., 1], yaw, velocity, brake], dim=2)
         batch_bboxes = torch.cat((batch_bboxes, batch_scores[..., None]),
                                  dim=-1)
         batch_bboxes[:, :, :4] *= ratio
@@ -545,8 +561,10 @@ class LidarCenterNet(nn.Module):
         in_channels: input channels
     """
 
-    def __init__(self, config, device, backbone, backbone_path, image_architecture='resnet34', lidar_architecture='resnet18', use_velocity=True):
+    def __init__(self, config ,device, backbone, backbone_path, image_architecture='resnet34', lidar_architecture='resnet18', use_velocity=True):
         super().__init__()
+        self._bev_downscale = nn.Conv2d(512, 256, kernel_size=1)
+        self._status_encoding = nn.Linear(4 + 2 + 2, 256)
         self.device = device
         self.config = config
         self.pred_len = config.pred_len
@@ -554,12 +572,13 @@ class LidarCenterNet(nn.Module):
         self.gru_concat_target_point = config.gru_concat_target_point
         self.use_point_pillars = config.use_point_pillars
 
-        if(self.use_point_pillars == True):
+        if (self.use_point_pillars == True):
             self.point_pillar_net = PointPillarNet(config.num_input, config.num_features,
-                                                   min_x = config.min_x, max_x = config.max_x,
-                                                   min_y = config.min_y, max_y = config.max_y,
-                                                   pixels_per_meter = int(config.pixels_per_meter),
-                                                  )
+                                                   min_x=config.min_x, max_x=config.max_x,
+                                                   min_y=config.min_y, max_y=config.max_y,
+                                                   pixels_per_meter=int(
+                                                       config.pixels_per_meter),
+                                                   )
 
         self.backbone = backbone
 
@@ -568,106 +587,128 @@ class LidarCenterNet(nn.Module):
             30,
         ]
 
-        self._keyval_embedding = nn.Embedding(8**2 + 1, config.tf_d_model)  # 8x8 feature grid + trajectory
-        self._query_embedding = nn.Embedding(sum(self._query_splits), config.tf_d_model)
+        self._keyval_embedding = nn.Embedding(
+            8**2 + 1, 256)  # 8x8 feature grid + trajectory
+        self._query_embedding = nn.Embedding(
+            sum(self._query_splits), 256)
 
         self.bev_proj = nn.Sequential(
-            *linear_relu_ln(256, 1, 1,320),
+            *linear_relu_ln(256, 1, 1, 320),
         )
-        self._tf_decoder = nn.TransformerDecoder(tf_decoder_layer, config.tf_num_layers)
+        tf_decoder_layer = nn.TransformerDecoderLayer(
+            d_model=256,
+            nhead=8,
+            dim_feedforward=1024,
+            dropout=0.0,
+            batch_first=True,
+        )
 
-        if(backbone == 'transFuser'):
-            self._model = TransfuserBackbone(config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
-        elif(backbone == 'late_fusion'):
-            self._model = LateFusionBackbone(config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
-        elif(backbone == 'geometric_fusion'):
-            self._model = GeometricFusionBackbone(config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
+        self._tf_decoder = nn.TransformerDecoder(
+            tf_decoder_layer, 3
+        )
+
+        if (backbone == 'transFuser'):
+            self._model = TransfuserBackbone(
+                config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
+        elif (backbone == 'late_fusion'):
+            self._model = LateFusionBackbone(
+                config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
+        elif (backbone == 'geometric_fusion'):
+            self._model = GeometricFusionBackbone(
+                config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
         elif (backbone == 'latentTF'):
-            self._model = latentTFBackbone(config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
+            self._model = latentTFBackbone(
+                config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
         else:
-            raise("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
+            raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
 
         if config.multitask:
-            self.seg_decoder   = SegDecoder(self.config,   self.config.perception_output_features).to(self.device)
-            self.depth_decoder = DepthDecoder(self.config, self.config.perception_output_features).to(self.device)
+            self.seg_decoder = SegDecoder(
+                self.config,   self.config.perception_output_features).to(self.device)
+            self.depth_decoder = DepthDecoder(
+                self.config, self.config.perception_output_features).to(self.device)
 
         channel = config.channel
 
         self.pred_bev = nn.Sequential(
-                            nn.Conv2d(channel, channel, kernel_size=(3, 3), stride=1, padding=(1, 1), bias=True),
-                            nn.ReLU(inplace=True),
-                            nn.Conv2d(channel, 3, kernel_size=(1, 1), stride=1, padding=0, bias=True)
+            nn.Conv2d(channel, channel, kernel_size=(3, 3),
+                      stride=1, padding=(1, 1), bias=True),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(channel, 3, kernel_size=(1, 1),
+                      stride=1, padding=0, bias=True)
         ).to(self.device)
 
         # prediction heads
-        self.head = LidarCenterNetHead(channel, channel, 1, train_cfg=config).to(self.device)
+        self.head = LidarCenterNetHead(
+            channel, channel, 1, train_cfg=config).to(self.device)
         self.i = 0
 
         # waypoints prediction
         self.join = nn.Sequential(
-                            nn.Linear(512, 256),
-                            nn.ReLU(inplace=True),
-                            nn.Linear(256, 128),
-                            nn.ReLU(inplace=True),
-                            nn.Linear(128, 64),
-                            nn.ReLU(inplace=True),
-                        ).to(self.device)
+            nn.Linear(512, 256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, 64),
+            nn.ReLU(inplace=True),
+        ).to(self.device)
 
         # gru decoder
         self.backbone_path = backbone_path
-        if backbone_path == "mlp": # GRU OG
+        if backbone_path == "mlp":  # GRU OG
             self.path_out = GRUDecoder(
-                self.config.gru_hidden_size,self.gru_concat_target_point,self.device
+                self.config.gru_hidden_size, self.gru_concat_target_point, self.device
             )
         elif backbone_path == "diffusiondrive":
-            print("Not yet implemented")
-            # self.path_out = TrajectoryHead(
-            #     num_poses=,
-            #     d_ffn=,
-            #     d_model=,
-            #     plan_anchor_path=,
-            #     config=,
-            # )
-
+            # print("Not yet implemented")
+            # print(config.path_config)
+            self.path_out = TrajectoryHead(
+                num_poses=8,
+                d_ffn=1024,
+                d_model=256,
+                plan_anchor_path="/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy",
+                config=config.path_config,
+            )
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        
 
         # pid controller
-        self.turn_controller = PIDController(K_P=config.turn_KP, K_I=config.turn_KI, K_D=config.turn_KD, n=config.turn_n)
-        self.speed_controller = PIDController(K_P=config.speed_KP, K_I=config.speed_KI, K_D=config.speed_KD, n=config.speed_n)
+        self.turn_controller = PIDController(
+            K_P=config.turn_KP, K_I=config.turn_KI, K_D=config.turn_KD, n=config.turn_n)
+        self.speed_controller = PIDController(
+            K_P=config.speed_KP, K_I=config.speed_KI, K_D=config.speed_KD, n=config.speed_n)
 
     def forward_gru(self, z, target_point):
         z = self.join(z)
-    
+
         output_wp = list()
-        
+
         # initial input variable to GRU
         x = torch.zeros(size=(z.shape[0], 2), dtype=z.dtype).to(z.device)
 
         target_point = target_point.clone()
         target_point[:, 1] *= -1
-        
+
         # autoregressive generation of output waypoints
         for _ in range(self.pred_len):
             if self.gru_concat_target_point:
                 x_in = torch.cat([x, target_point], dim=1)
             else:
                 x_in = x
-            
+
             dx = self.path_out(x_in, z)
             # z = self.decoder(x_in, z)
             # dx = self.output(z)
-            
-            x = dx[:,:2] + x
-            
-            output_wp.append(x[:,:2])
-            
+
+            x = dx[:, :2] + x
+
+            output_wp.append(x[:, :2])
+
         pred_wp = torch.stack(output_wp, dim=1)
 
         # pred the wapoints in the vehicle coordinate and we convert it to lidar coordinate here because the GT waypoints is in lidar coordinate
         pred_wp[:, :, 0] = pred_wp[:, :, 0] - self.config.lidar_pos[0]
-            
+
         pred_brake = None
         steer = None
         throttle = None
@@ -681,7 +722,7 @@ class LidarCenterNet(nn.Module):
             waypoints (tensor): output of self.plan()
             velocity (tensor): speedometer input
         '''
-        assert(waypoints.size(0)==1)
+        assert (waypoints.size(0) == 1)
         waypoints = waypoints[0].data.cpu().numpy()
         # when training we transform the waypoints to lidar coordinate, so we need to change is back when control
         waypoints[:, 0] += self.config.lidar_pos[0]
@@ -691,9 +732,11 @@ class LidarCenterNet(nn.Module):
         desired_speed = np.linalg.norm(waypoints[0] - waypoints[1]) * 2.0
 
         if is_stuck:
-            desired_speed = np.array(self.config.default_speed) # default speed of 14.4 km/h
+            # default speed of 14.4 km/h
+            desired_speed = np.array(self.config.default_speed)
 
-        brake = ((desired_speed < self.config.brake_speed) or ((speed / desired_speed) > self.config.brake_ratio))
+        brake = ((desired_speed < self.config.brake_speed) or (
+            (speed / desired_speed) > self.config.brake_ratio))
 
         delta = np.clip(desired_speed - speed, 0.0, self.config.clip_delta)
         throttle = self.speed_controller.step(delta)
@@ -705,39 +748,169 @@ class LidarCenterNet(nn.Module):
             angle = 0.0  # When we don't move we don't want the angle error to accumulate in the integral
         if brake:
             angle = 0.0
-        
+
         steer = self.turn_controller.step(angle)
 
-        steer = np.clip(steer, -1.0, 1.0) #Valid steering values are in [-1,1]
+        # Valid steering values are in [-1,1]
+        steer = np.clip(steer, -1.0, 1.0)
 
         return steer, throttle, brake
-    
-    def forward_ego(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
+
+    def forward(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
                     stuck_detector=0, forced_move=False, num_points=None, rgb_back=None, debug=False):
-        
-        if(self.use_point_pillars == True):
+
+        if (self.use_point_pillars == True):
             lidar_bev = self.point_pillar_net(lidar_bev, num_points)
-            lidar_bev = torch.rot90(lidar_bev, -1, dims=(2, 3)) #For consitency this is also done in voxelization
+            # For consitency this is also done in voxelization
+            lidar_bev = torch.rot90(lidar_bev, -1, dims=(2, 3))
 
         if self.use_target_point_image:
             lidar_bev = torch.cat((lidar_bev, target_point_image), dim=1)
 
         if (self.backbone == 'transFuser'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel)
+            transfuser_feature, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel)
         elif (self.backbone == 'late_fusion'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel)
+            features, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel)
         elif (self.backbone == 'geometric_fusion'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel, bev_points, cam_points)
+            features, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel, bev_points, cam_points)
         elif (self.backbone == 'latentTF'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel)
+            features, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel)
         else:
             raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
-        
-        if self.backbone_path == "mlp":
-            pred_wp, _, _, _, _ = self.forward_gru(fused_features, target_point)
 
-        preds = self.head([features[0]])
-        results = self.head.get_bboxes(preds[0], preds[1], preds[2], preds[3], preds[4], preds[5], preds[6])
+     
+        # # print("is it getting here")
+        # # print("featur" , len(features))
+        # # print("feature ", features[0].shape)
+        # # print("image_feauter " ,image_features_grid.shape)
+        # # print("fused feautres",fused_features.shape)
+        self.backbone_path = "diffusiondrive"
+        if self.backbone_path == "mlp":
+            pred_wp, _, _, _, _ = self.forward_gru(
+                fused_features, target_point)
+
+        elif self.backbone_path == "diffusiondrive":
+            features = transfuser_feature[1]
+            x_threshhold = 1  # what unit is this? TODO: CALCULATE A BETTER THRESHHOLD
+
+           
+            # TODO: Implement the diffusion drive path prediction here
+
+            # need target
+            # need status_feature
+            #
+           
+            driving_command = torch.tensor([0, 1, 0, 0], dtype=torch.float32, device='cuda')  # shape [4]
+            driving_command = driving_command.unsqueeze(1).repeat(1, 10)  # shape [4, 10]
+
+            # if target_point[0] >= x_threshhold:
+            #     driving_command = [0, 0, 1, 0]
+            # elif target_point[0] <= -x_threshhold:
+            #     driving_command = [1, 0, 0, 0]
+            # Only use the first two axes: X and Y
+            # xy = torch.stack(ego_acc[:2])  # shape: (2, 10)
+
+            # # Calculate 2D vector magnitudes (√(x² + y²))
+            # ego_acc = torch.linalg.norm(xy, dim=0)
+            # ego_acc = ego_acc.to(device='cuda')
+            # ego_acc = ego_acc.reshape(-1, 1)
+            x = ego_acc[0]  # shape [10]
+            y = ego_acc[1]  # shape [10]
+            acc_xy = torch.stack([x, y], dim=0)  # shape: [2, 10]
+            acc_xy = acc_xy.to('cuda')
+
+            # Flatten velocity and angle
+            device = ego_vel.device  # assuming vel is already on CUDA
+
+            theta = theta.to(device)
+
+            vel = ego_vel.view(-1)      # shape: [10]
+            theta = theta.view(-1)      # shape: [10]
+
+            # Compute velocity components
+            vx = vel * torch.cos(theta)
+            vy = vel * torch.sin(theta)
+            velocity_xy = torch.stack([vx, vy], dim=0)  # shape: [2, 10]
+     
+            # Combine into a single status_feature
+            status_feature = torch.cat(
+                [
+                    driving_command,
+                    velocity_xy.to(torch.float32),
+                    acc_xy.to(torch.float32),
+                ],
+                dim=0  # concatenate along rows, resulting in shape [4, 10]
+            ).T
+
+            batch_size = status_feature.shape[0]
+            cross_bev_feature = features
+            bev_spatial_shape = features.shape[2:]
+            concat_cross_bev_shape = fused_features.shape[2:]
+
+            
+            # fused_features = fused_features.unsqueeze(0)  # [1, 10, 512]
+            # fused_features = fused_features.unsqueeze(2)  # [1, 10, 1, 512]
+
+
+            bev_feature = self._bev_downscale(fused_features).flatten(-2, -1)
+            
+            bev_feature = bev_feature.permute(0, 2, 1)
+
+            status_encoding = self._status_encoding(status_feature)
+            
+      
+
+            keyval = torch.cat(
+                [bev_feature, status_encoding[:, None]], dim=1)
+        
+            keyval += self._keyval_embedding.weight[None, ...]
+            # print(keyval.shape)
+            # print(concat_cross_bev_shape)
+            concat_cross_bev = keyval[:, :-1].permute(0, 2, 1).contiguous().view(
+                batch_size, -1, concat_cross_bev_shape[0], concat_cross_bev_shape[1])
+            # upsample to the same shape as bev_feature_upscale
+
+            concat_cross_bev = F.interpolate(
+                concat_cross_bev, size=bev_spatial_shape, mode='bilinear', align_corners=False)
+            # concat concat_cross_bev and cross_bev_feature
+            cross_bev_feature = torch.cat(
+                [concat_cross_bev, cross_bev_feature], dim=1)
+
+            cross_bev_feature = self.bev_proj(
+                cross_bev_feature.flatten(-2, -1).permute(0, 2, 1))
+            cross_bev_feature = cross_bev_feature.permute(0, 2, 1).contiguous().view(
+                batch_size, -1, bev_spatial_shape[0], bev_spatial_shape[1])
+            query = self._query_embedding.weight[None, ...].repeat(
+                batch_size, 1, 1)
+            # print(query.shape)
+            query_out = self._tf_decoder(query, keyval)
+
+            trajectory_query, agents_query = query_out.split(
+                self._query_splits, dim=1)
+           
+            # print(trajectory_query.shape)
+            forward_pass = self.path_out(
+                trajectory_query,
+                agents_query,
+                cross_bev_feature,
+                bev_spatial_shape,
+                status_encoding[:, None],
+                None,
+                None
+            )  # {"trajectory": poses_reg}
+            # print("dawkodkawopdkwaodkawopkdawkdpoawkdop")
+            
+            # print(forward_pass["trajectory"].shape)
+            # print(forward_pass)
+            
+
+        preds = self.head([transfuser_feature[0]])
+        results = self.head.get_bboxes(
+            preds[0], preds[1], preds[2], preds[3], preds[4], preds[5], preds[6])
         bboxes, _ = results[0]
 
         # filter bbox based on the confidence of the prediction
@@ -748,55 +921,69 @@ class LidarCenterNet(nn.Module):
             rotated_bboxes.append(bbox)
 
         self.i += 1
-        if debug and self.i % 2 == 0 and not (save_path is None):
-            pred_bev = self.pred_bev(features[0])
-            pred_bev = F.interpolate(pred_bev, (self.config.bev_resolution_height, self.config.bev_resolution_width), mode='bilinear', align_corners=True)
-            pred_semantic = self.seg_decoder(image_features_grid)
-            pred_depth = self.depth_decoder(image_features_grid)
+        # if debug and self.i % 2 == 0 and not (save_path is None):
+        pred_bev = self.pred_bev(transfuser_feature[0])
+        pred_bev = F.interpolate(pred_bev, (160,
+                                    160), mode='bilinear', align_corners=True)
+        pred_semantic = self.seg_decoder(image_features_grid)
+        pred_depth = self.depth_decoder(image_features_grid)
+        
+        pred_wp = forward_pass["trajectory"][0][0]
+        path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
+        # self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
+                                # pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+                                # gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
-            self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
-                            pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
-                            gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
+        # CALL VLM WITH poses_reg TO DECIDE BEST PATH
 
+        # pred_wp = vlm(forward_pass["trajectory"], rgb)
+
+        return 0, 0
 
         return pred_wp, rotated_bboxes
 
-    def forward(self, rgb, lidar_bev, ego_waypoint, target_point, target_point_image, 
-                ego_vel, bev, label, depth, semantic, num_points=None, save_path=None, 
+    def forward_old(self, rgb, lidar_bev, ego_waypoint, target_point, target_point_image,
+                ego_vel, bev, label, depth, semantic, num_points=None, save_path=None,
                 bev_points=None, cam_points=None):
         loss = {}
 
-        if(self.use_point_pillars == True):
+        if (self.use_point_pillars == True):
             lidar_bev = self.point_pillar_net(lidar_bev, num_points)
-            lidar_bev = torch.rot90(lidar_bev, -1, dims=(2, 3)) #For consitency this is also done in voxelization
-
+            # For consitency this is also done in voxelization
+            lidar_bev = torch.rot90(lidar_bev, -1, dims=(2, 3))
 
         if self.use_target_point_image:
             lidar_bev = torch.cat((lidar_bev, target_point_image), dim=1)
 
         if (self.backbone == 'transFuser'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel)
+            features, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel)
         elif (self.backbone == 'late_fusion'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel)
+            features, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel)
         elif (self.backbone == 'geometric_fusion'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel, bev_points, cam_points)
+            features, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel, bev_points, cam_points)
         elif (self.backbone == 'latentTF'):
-            features, image_features_grid, fused_features = self._model(rgb, lidar_bev, ego_vel)
+            features, image_features_grid, fused_features = self._model(
+                rgb, lidar_bev, ego_vel)
         else:
             raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
 
-        if self.backbone_path == "mlp":
+        if  self.backbone_path == 'mlp':
 
-            pred_wp, _, _, _, _ = self.forward_gru(fused_features, target_point)
+            pred_wp, _, _, _, _ = self.forward_gru(
+                fused_features, target_point)
             loss_wp = torch.mean(torch.abs(pred_wp - ego_waypoint))
-            
+
         elif self.backbone_path == "diffusiondrive":
-            print(None) 
+            # print(None)
             # TODO: Implement the diffusion drive path prediction here
 
             # need target
             # need status_feature
-            # 
+            #
+
             batch_size = status_feature.shape[0]
             cross_bev_feature = features
             bev_spatial_shape = features
@@ -805,44 +992,50 @@ class LidarCenterNet(nn.Module):
             bev_feature = fused_features.permute(0, 2, 1)
             status_encoding = self._status_encoding(status_feature)
 
-            keyval = torch.concatenate([bev_feature, status_encoding[:, None]], dim=1)
+            keyval = torch.concatenate(
+                [bev_feature, status_encoding[:, None]], dim=1)
             keyval += self._keyval_embedding.weight[None, ...]
 
-            concat_cross_bev = keyval[:,:-1].permute(0,2,1).contiguous().view(batch_size, -1, concat_cross_bev_shape[0], concat_cross_bev_shape[1])
+            concat_cross_bev = keyval[:, :-1].permute(0, 2, 1).contiguous().view(
+                batch_size, -1, concat_cross_bev_shape[0], concat_cross_bev_shape[1])
             # upsample to the same shape as bev_feature_upscale
 
-            concat_cross_bev = F.interpolate(concat_cross_bev, size=bev_spatial_shape, mode='bilinear', align_corners=False)
+            concat_cross_bev = F.interpolate(
+                concat_cross_bev, size=bev_spatial_shape, mode='bilinear', align_corners=False)
             # concat concat_cross_bev and cross_bev_feature
-            cross_bev_feature = torch.cat([concat_cross_bev, cross_bev_feature], dim=1)
+            cross_bev_feature = torch.cat(
+                [concat_cross_bev, cross_bev_feature], dim=1)
 
-            cross_bev_feature = self.bev_proj(cross_bev_feature.flatten(-2,-1).permute(0,2,1))
-            cross_bev_feature = cross_bev_feature.permute(0,2,1).contiguous().view(batch_size, -1, bev_spatial_shape[0], bev_spatial_shape[1])
-            query = self._query_embedding.weight[None, ...].repeat(batch_size, 1, 1)
+            cross_bev_feature = self.bev_proj(
+                cross_bev_feature.flatten(-2, -1).permute(0, 2, 1))
+            cross_bev_feature = cross_bev_feature.permute(0, 2, 1).contiguous().view(
+                batch_size, -1, bev_spatial_shape[0], bev_spatial_shape[1])
+            query = self._query_embedding.weight[None, ...].repeat(
+                batch_size, 1, 1)
             query_out = self._tf_decoder(query, keyval)
 
-            trajectory_query, agents_query = query_out.split(self._query_splits, dim=1)
-
+            trajectory_query, agents_query = query_out.split(
+                self._query_splits, dim=1)
 
             loss_wp = self.path_out(
-                trajectory_query, 
-                agents_query, 
+                trajectory_query,
+                agents_query,
                 bev_feature,
                 bev_spatial_shape,
                 status_encoding[:, None],
                 targets,
                 None
-            ) # {"trajectory": best_reg,"trajectory_loss":ret_traj_loss,"trajectory_loss_dict":trajectory_loss_dict}
-
-
+            )  # {"trajectory": best_reg,"trajectory_loss":ret_traj_loss,"trajectory_loss_dict":trajectory_loss_dict}
 
         # pred topdown view
         pred_bev = self.pred_bev(features[0])
-        pred_bev = F.interpolate(pred_bev, (self.config.bev_resolution_height, self.config.bev_resolution_width), mode='bilinear', align_corners=True)
+        pred_bev = F.interpolate(pred_bev, (self.config.bev_resolution_height,
+                                 self.config.bev_resolution_width), mode='bilinear', align_corners=True)
 
-        weight = torch.from_numpy(np.array([1., 1., 3.])).to(dtype=torch.float32, device=pred_bev.device)
+        weight = torch.from_numpy(np.array([1., 1., 3.])).to(
+            dtype=torch.float32, device=pred_bev.device)
         loss_bev = F.cross_entropy(pred_bev, bev, weight=weight).mean()
 
-       
         loss.update({
             "loss_wp": loss_wp,
             "loss_bev": loss_bev
@@ -853,15 +1046,17 @@ class LidarCenterNet(nn.Module):
         gt_labels = torch.zeros_like(label[:, :, 0])
         gt_bboxes_ignore = label.sum(dim=-1) == 0.
         loss_bbox = self.head.loss(preds[0], preds[1], preds[2], preds[3], preds[4], preds[5], preds[6],
-                                [label], gt_labels=[gt_labels], gt_bboxes_ignore=[gt_bboxes_ignore], img_metas=None)
-        
+                                   [label], gt_labels=[gt_labels], gt_bboxes_ignore=[gt_bboxes_ignore], img_metas=None)
+
         loss.update(loss_bbox)
 
         if self.config.multitask:
             pred_semantic = self.seg_decoder(image_features_grid)
             pred_depth = self.depth_decoder(image_features_grid)
-            loss_semantic = self.config.ls_seg * F.cross_entropy(pred_semantic, semantic).mean()
-            loss_depth = self.config.ls_depth * F.l1_loss(pred_depth, depth).mean()
+            loss_semantic = self.config.ls_seg * \
+                F.cross_entropy(pred_semantic, semantic).mean()
+            loss_depth = self.config.ls_depth * \
+                F.l1_loss(pred_depth, depth).mean()
             loss.update({
                 "loss_depth": loss_depth,
                 "loss_semantic": loss_semantic
@@ -875,42 +1070,47 @@ class LidarCenterNet(nn.Module):
         self.i += 1
         if ((self.config.debug == True) and (self.i % self.config.train_debug_save_freq == 0) and (save_path != None)):
             with torch.no_grad():
-                results = self.head.get_bboxes(preds[0], preds[1], preds[2], preds[3], preds[4], preds[5], preds[6])
+                results = self.head.get_bboxes(
+                    preds[0], preds[1], preds[2], preds[3], preds[4], preds[5], preds[6])
                 bboxes, _ = results[0]
-                bboxes = bboxes[bboxes[:, -1] > self.config.bb_confidence_threshold]
+                bboxes = bboxes[bboxes[:, -1] >
+                                self.config.bb_confidence_threshold]
                 self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
-                                   pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
-                                   gt_bboxes=label, expert_waypoints=ego_waypoint, stuck_detector=0, forced_move=False)
+                                        pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+                                        gt_bboxes=label, expert_waypoints=ego_waypoint, stuck_detector=0, forced_move=False)
 
         return loss
 
-
     # Converts the coordinate system to x front y right, vehicle center at the origin.
     # Units are converted from pixels to meters
+
     def get_bbox_local_metric(self, bbox):
         x, y, w, h, yaw, speed, brake, confidence = bbox
 
-        w = w / self.config.bounding_box_divisor / self.config.pixels_per_meter # We multiplied by 2 when collecting the data, and multiplied by 8 when loading the labels.
-        h = h / self.config.bounding_box_divisor / self.config.pixels_per_meter # We multiplied by 2 when collecting the data, and multiplied by 8 when loading the labels.
+        # We multiplied by 2 when collecting the data, and multiplied by 8 when loading the labels.
+        w = w / self.config.bounding_box_divisor / self.config.pixels_per_meter
+        # We multiplied by 2 when collecting the data, and multiplied by 8 when loading the labels.
+        h = h / self.config.bounding_box_divisor / self.config.pixels_per_meter
 
         T = get_lidar_to_bevimage_transform()
         T_inv = np.linalg.inv(T)
 
-        center = np.array([x,y,1.0])
+        center = np.array([x, y, 1.0])
 
         center_old_coordinate_sys = T_inv @ center
 
-        center_old_coordinate_sys = center_old_coordinate_sys + np.array(self.config.lidar_pos)
+        center_old_coordinate_sys = center_old_coordinate_sys + \
+            np.array(self.config.lidar_pos)
 
-        #Convert to standard CARLA right hand coordinate system
-        center_old_coordinate_sys[1] =  -center_old_coordinate_sys[1]
+        # Convert to standard CARLA right hand coordinate system
+        center_old_coordinate_sys[1] = -center_old_coordinate_sys[1]
 
         bbox = np.array([[-h, -w, 1],
                          [-h,  w, 1],
-                         [ h,  w, 1],
-                         [ h, -w, 1],
-                         [ 0,  0, 1],
-                         [ 0, h * speed * 0.5, 1]])
+                         [h,  w, 1],
+                         [h, -w, 1],
+                         [0,  0, 1],
+                         [0, h * speed * 0.5, 1]])
 
         R = np.array([[np.cos(yaw), -np.sin(yaw), 0],
                       [np.sin(yaw),  np.cos(yaw), 0],
@@ -918,13 +1118,15 @@ class LidarCenterNet(nn.Module):
 
         for point_index in range(bbox.shape[0]):
             bbox[point_index] = R @ bbox[point_index]
-            bbox[point_index] = bbox[point_index] + np.array([center_old_coordinate_sys[0], center_old_coordinate_sys[1],0])
+            bbox[point_index] = bbox[point_index] + \
+                np.array([center_old_coordinate_sys[0],
+                         center_old_coordinate_sys[1], 0])
 
         return bbox, brake, confidence
 
     # this is different
     def get_rotated_bbox(self, bbox):
-        x, y, w, h, yaw, speed, brake =  bbox
+        x, y, w, h, yaw, speed, brake = bbox
 
         bbox = np.array([[h,   w, 1],
                          [h,  -w, 1],
@@ -954,16 +1156,16 @@ class LidarCenterNet(nn.Module):
                 else:
                     color = color
                 # brake is true while still have high velocity
-                cv2.line(image, tuple(bbox[s]), tuple(bbox[e]), color=color, thickness=1)
+                cv2.line(image, tuple(bbox[s]), tuple(
+                    bbox[e]), color=color, thickness=1)
         return image
 
-
-    def draw_waypoints(self, label, waypoints, image, color = (255, 255, 255)):
+    def draw_waypoints(self, label, waypoints, image, color=(255, 255, 255)):
         waypoints = waypoints.detach().cpu().numpy()
         label = label.detach().cpu().numpy()
 
         for bbox, points in zip(label, waypoints):
-            x, y, w, h, yaw, speed, brake =  bbox
+            x, y, w, h, yaw, speed, brake = bbox
             c, s = np.cos(yaw), np.sin(yaw)
             # use y x because coordinate is changed
             r1_to_world = np.array([[c, -s, x], [s, c, y], [0, 0, 1]])
@@ -987,7 +1189,8 @@ class LidarCenterNet(nn.Module):
             points[:, 0] *= -1
             points = points * self.config.pixels_per_meter
             points = points[:, [1, 0]]
-            points = np.concatenate((points, np.ones_like(points[:, :1])), axis=-1)
+            points = np.concatenate(
+                (points, np.ones_like(points[:, :1])), axis=-1)
 
             points = r1_to_world @ points.T
             points = points.T
@@ -996,28 +1199,30 @@ class LidarCenterNet(nn.Module):
             for point in points[:, :2]:
                 points_to_draw.append(point.copy())
                 point = point.astype(np.int32)
-                cv2.circle(image, tuple(point), radius=3, color=color, thickness=3)
+                cv2.circle(image, tuple(point), radius=3,
+                           color=color, thickness=3)
         return image
 
-
-    def draw_target_point(self, target_point, image, color = (255, 255, 255)):
+    def draw_target_point(self, target_point, image, color=(255, 255, 255)):
         target_point = target_point.copy()
 
         target_point[1] += self.config.lidar_pos[0]
         point = target_point * self.config.pixels_per_meter
         point[1] *= -1
-        point[1] = self.config.lidar_resolution_width - point[1] #Might be LiDAR height
-        point[0] += int(self.config.lidar_resolution_height / 2.0) #Might be LiDAR width
+        point[1] = self.config.lidar_resolution_width - \
+            point[1]  # Might be LiDAR height
+        point[0] += int(self.config.lidar_resolution_height /
+                        2.0)  # Might be LiDAR width
         point = point.astype(np.int32)
         point = np.clip(point, 0, 512)
         cv2.circle(image, tuple(point), radius=5, color=color, thickness=3)
         return image
 
     def visualize_model_io(self, save_path, step, config, rgb, lidar_bev, target_point,
-                        pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, device,
-                        gt_bboxes=None, expert_waypoints=None, stuck_detector=0, forced_move=False):
+                           pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, device,
+                           gt_bboxes=None, expert_waypoints=None, stuck_detector=0, forced_move=False):
         font = ImageFont.load_default()
-        i = 0 # We only visualize the first image if there is a batch of them.
+        i = 0  # We only visualize the first image if there is a batch of them.
         if config.multitask:
             classes_list = config.classes_list
             converter = np.array(classes_list)
@@ -1027,13 +1232,16 @@ class LidarCenterNet(nn.Module):
             indices = np.argmax(pred_semantic.detach().cpu().numpy(), axis=1)
             semantic_image = converter[indices[i, ...], ...].astype('uint8')
 
-            ds_image = np.stack((depth_image, depth_image, depth_image), axis=2)
+            ds_image = np.stack(
+                (depth_image, depth_image, depth_image), axis=2)
             ds_image = (ds_image * 255).astype(np.uint8)
             ds_image = np.concatenate((ds_image, semantic_image), axis=0)
             ds_image = cv2.resize(ds_image, (640, 256))
-            ds_image = np.concatenate([ds_image, np.zeros_like(ds_image[:50])], axis=0)
+            ds_image = np.concatenate(
+                [ds_image, np.zeros_like(ds_image[:50])], axis=0)
 
-        images = np.concatenate(list(lidar_bev.detach().cpu().numpy()[i][:2]), axis=1)
+        images = np.concatenate(
+            list(lidar_bev.detach().cpu().numpy()[i][:2]), axis=1)
         images = (images * 255).astype(np.uint8)
         images = np.stack([images, images, images], axis=-1)
         images = np.concatenate([images, np.zeros_like(images[:50])], axis=0)
@@ -1044,31 +1252,38 @@ class LidarCenterNet(nn.Module):
             for bbox in gt_bboxes.detach().cpu().numpy()[i]:
                 bbox = self.get_rotated_bbox(bbox)
                 rotated_bboxes_gt.append(bbox)
-            images = self.draw_bboxes(rotated_bboxes_gt, images, color=(0, 255, 0), brake_color=(0, 255, 128))
+            images = self.draw_bboxes(rotated_bboxes_gt, images, color=(
+                0, 255, 0), brake_color=(0, 255, 128))
 
         rotated_bboxes = []
         for bbox in bboxes.detach().cpu().numpy():
             bbox = self.get_rotated_bbox(bbox[:7])
             rotated_bboxes.append(bbox)
-        images = self.draw_bboxes(rotated_bboxes, images, color=(255, 0, 0), brake_color=(0, 255, 255))
+        images = self.draw_bboxes(rotated_bboxes, images, color=(
+            255, 0, 0), brake_color=(0, 255, 255))
 
         label = torch.zeros((1, 1, 7)).to(device)
         label[:, -1, 0] = 128.
         label[:, -1, 1] = 256.
 
         if not expert_waypoints is None:
-            images = self.draw_waypoints(label[0], expert_waypoints[i:i+1], images, color=(0, 0, 255))
+            images = self.draw_waypoints(
+                label[0], expert_waypoints[i:i+1], images, color=(0, 0, 255))
 
-        images = self.draw_waypoints(label[0], deepcopy(pred_wp[i:i + 1, 2:]), images, color=(255, 255, 255)) # Auxliary waypoints in white
-        images = self.draw_waypoints(label[0], deepcopy(pred_wp[i:i + 1, :2]), images, color=(255, 0, 0))     # First two, relevant waypoints in blue
+        images = self.draw_waypoints(label[0], deepcopy(
+            pred_wp[i:i + 1, 2:]), images, color=(255, 255, 255))  # Auxliary waypoints in white
+        images = self.draw_waypoints(label[0], deepcopy(
+            pred_wp[i:i + 1, :2]), images, color=(255, 0, 0))     # First two, relevant waypoints in blue
 
         # draw target points
-        images = self.draw_target_point(target_point[i].detach().cpu().numpy(), images)
+        images = self.draw_target_point(
+            target_point[i].detach().cpu().numpy(), images)
 
         # stuck text
         images = Image.fromarray(images)
         draw = ImageDraw.Draw(images)
-        draw.text((10, 0), "stuck detector:   %04d" % (stuck_detector), font=font)
+        draw.text((10, 0), "stuck detector:   %04d" %
+                  (stuck_detector), font=font)
         draw.text((10, 30), "forced move:      %s" % (" True" if forced_move else "False"), font=font,
                   fill=(255, 0, 0, 255) if forced_move else (255, 255, 255, 255))
         images = np.array(images)
@@ -1077,31 +1292,41 @@ class LidarCenterNet(nn.Module):
         bev = np.stack([bev, bev, bev], axis=2) * 255.
         bev_image = bev.astype(np.uint8)
         bev_image = cv2.resize(bev_image, (256, 256))
-        bev_image = np.concatenate([bev_image, np.zeros_like(bev_image[:50])], axis=0)
+        bev_image = np.concatenate(
+            [bev_image, np.zeros_like(bev_image[:50])], axis=0)
 
         if not expert_waypoints is None:
-            bev_image = self.draw_waypoints(label[0], expert_waypoints[i:i+1], bev_image, color=(0, 0, 255))
+            bev_image = self.draw_waypoints(
+                label[0], expert_waypoints[i:i+1], bev_image, color=(0, 0, 255))
 
-        bev_image = self.draw_waypoints(label[0], deepcopy(pred_wp[i:i + 1, 2:]), bev_image, color=(255, 255, 255))
-        bev_image = self.draw_waypoints(label[0], deepcopy(pred_wp[i:i + 1, :2]), bev_image, color=(255, 0, 0))
+        bev_image = self.draw_waypoints(label[0], deepcopy(
+            pred_wp[i:i + 1, 2:]), bev_image, color=(255, 255, 255))
+        bev_image = self.draw_waypoints(label[0], deepcopy(
+            pred_wp[i:i + 1, :2]), bev_image, color=(255, 0, 0))
 
-        bev_image = self.draw_target_point(target_point[i].detach().cpu().numpy(), bev_image)
+        bev_image = self.draw_target_point(
+            target_point[i].detach().cpu().numpy(), bev_image)
 
         if (not (expert_waypoints is None)):
-            aim = expert_waypoints[i:i + 1, :2].detach().cpu().numpy()[0].mean(axis=0)
-            expert_angle = np.degrees(np.arctan2(aim[1], aim[0] + self.config.lidar_pos[0]))
+            aim = expert_waypoints[i:i + 1,
+                                   :2].detach().cpu().numpy()[0].mean(axis=0)
+            expert_angle = np.degrees(np.arctan2(
+                aim[1], aim[0] + self.config.lidar_pos[0]))
 
             aim = pred_wp[i:i + 1, :2].detach().cpu().numpy()[0].mean(axis=0)
-            ego_angle = np.degrees(np.arctan2(aim[1], aim[0] + self.config.lidar_pos[0]))
+            ego_angle = np.degrees(np.arctan2(
+                aim[1], aim[0] + self.config.lidar_pos[0]))
             angle_error = normalize_angle_degree(expert_angle - ego_angle)
 
             bev_image = Image.fromarray(bev_image)
             draw = ImageDraw.Draw(bev_image)
-            draw.text((0, 0), "Angle error:        %.2f°" % (angle_error), font=font)
+            draw.text((0, 0), "Angle error:        %.2f°" %
+                      (angle_error), font=font)
 
         bev_image = np.array(bev_image)
 
-        rgb_image = rgb[i].permute(1, 2, 0).detach().cpu().numpy()[:, :, [2, 1, 0]]
+        rgb_image = rgb[i].permute(1, 2, 0).detach().cpu().numpy()[
+            :, :, [2, 1, 0]]
         rgb_image = cv2.resize(rgb_image, (1280 + 128, 320 + 32))
         assert (config.multitask)
         images = np.concatenate((bev_image, images, ds_image), axis=1)

@@ -1,9 +1,7 @@
 import os
-from path_gen.diffusiondrive.transfuser_config import TransfuserConfig
 
 class GlobalConfig:
     """ base architecture configurations """
-    path_config = TransfuserConfig()
 	# Data
     seq_len = 1 # input timesteps
     # use different seq len for image and lidar
@@ -52,7 +50,7 @@ class GlobalConfig:
 
     backbone = 'transFuser'
 
-    backbone_path = 'mlp'
+    backbone_path = 'diffusiondrive'
     
     # CenterNet parameters
     num_dir_bins = 12
@@ -222,6 +220,7 @@ class GlobalConfig:
             self.val_towns = [self.train_towns[0]]
             self.train_data, self.val_data = [], []
             for town in self.train_towns:
+                print(self.train_towns)
                 root_files = os.listdir(os.path.join(self.root_dir, town)) #Town folders
                 for file in root_files:
                     if not os.path.isfile(os.path.join(self.root_dir, file)):

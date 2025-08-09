@@ -184,6 +184,12 @@ class AutoPilot(autonomous_agent_local.AutonomousAgent):
         gps = input_data['gps'][1][:2]
         speed = input_data['speed'][1]['speed']
         compass = input_data['imu'][1][-1]
+        imu_data = input_data['imu'][1]
+
+        accel_x = imu_data[0]
+        accel_y = imu_data[1]
+        accel_z = imu_data[2]
+        acceleration = [accel_x, accel_y, accel_z]
         if (math.isnan(compass) == True): # simulation bug
             compass = 0.0
 
@@ -191,6 +197,7 @@ class AutoPilot(autonomous_agent_local.AutonomousAgent):
                 'gps': gps,
                 'speed': speed,
                 'compass': compass,
+                'acceleration': acceleration
                 }
 
         return result
@@ -307,6 +314,8 @@ class AutoPilot(autonomous_agent_local.AutonomousAgent):
         pos = self._get_position(tick_data['gps'])
         theta = tick_data['compass']
         speed = tick_data['speed']
+        acceleration = tick_data['acceleration']
+
 
         waypoints = []
         for i, box in enumerate(self.future_states['ego']):
@@ -337,7 +346,8 @@ class AutoPilot(autonomous_agent_local.AutonomousAgent):
                 'walker_hazard':    self.walker_hazard,
                 'stop_sign_hazard': self.stop_sign_hazard,
                 'angle':            self.angle,
-                'ego_matrix': self._vehicle.get_transform().get_matrix()
+                'ego_matrix': self._vehicle.get_transform().get_matrix(),
+                'acceleration': acceleration
                 }
 
         measurements_file = self.save_path / 'measurements' / ('%04d.json' % frame)

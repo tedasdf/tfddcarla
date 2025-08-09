@@ -3,182 +3,365 @@ import numpy as np
 import torch
 import torch.nn as nn
 import copy
-from transfuser.team_code_transfuser.path_gen.diffusiondrive.transfuser_config import TransfuserConfig
-from transfuser.team_code_transfuser.path_gen.diffusiondrive.transfuser_backbone import TransfuserBackbone
-from transfuser.team_code_transfuser.path_gen.diffusiondrive.transfuser_features import BoundingBox2DIndex
-from transfuser.team_code_transfuser.common.enums import StateSE2Index
+from path_gen.diffusiondrive.transfuser_config import TransfuserConfig
+# from path_gen.diffusiondrive.transfuser_backbone import TransfuserBackbone
+# from path_gen.diffusiondrive.transfuser_features import BoundingBox2DIndex
+
 from diffusers.schedulers import DDIMScheduler
-from transfuser.team_code_transfuser.path_gen.diffusiondrive.modules.conditional_unet1d import ConditionalUnet1D,SinusoidalPosEmb
+from path_gen.diffusiondrive.modules.conditional_unet1d import ConditionalUnet1D,SinusoidalPosEmb
 import torch.nn.functional as F
-from transfuser.team_code_transfuser.path_gen.diffusiondrive.modules.blocks import linear_relu_ln,bias_init_with_prob, gen_sineembed_for_position, GridSampleCrossBEVAttention
-from transfuser.team_code_transfuser.path_gen.diffusiondrive.modules.multimodal_loss import LossComputer
+from path_gen.diffusiondrive.modules.blocks import linear_relu_ln,bias_init_with_prob, gen_sineembed_for_position, GridSampleCrossBEVAttention
+from path_gen.diffusiondrive.modules.multimodal_loss import LossComputer
 
 from typing import Any, List, Dict, Optional, Union
 
-class V2TransfuserModel(nn.Module):
-    """Torch module for Transfuser."""
+from enum import IntEnum
 
-    def __init__(self, config: TransfuserConfig):
-        """
-        Initializes TransFuser torch module.
-        :param config: global config dataclass of TransFuser.
-        """
 
-        super().__init__()
+class StateSE2Index(IntEnum):
+    """Intenum for SE(2) arrays."""
 
-        self._query_splits = [
-            1,
-            config.num_bounding_boxes,
+    _X = 0
+    _Y = 1
+    _HEADING = 2
+
+    @classmethod
+    def size(cls):
+        valid_attributes = [
+            attribute
+            for attribute in dir(cls)
+            if attribute.startswith("_") and not attribute.startswith("__") and not callable(getattr(cls, attribute))
         ]
+        return len(valid_attributes)
 
-        self._config = config
-        self._backbone = TransfuserBackbone(config)
+    @classmethod
+    @property
+    def X(cls):
+        return cls._X
 
-        self._keyval_embedding = nn.Embedding(8**2 + 1, config.tf_d_model)  # 8x8 feature grid + trajectory
-        self._query_embedding = nn.Embedding(sum(self._query_splits), config.tf_d_model)
+    @classmethod
+    @property
+    def Y(cls):
+        return cls._Y
 
-        # usually, the BEV features are variable in size.
-        self._bev_downscale = nn.Conv2d(512, config.tf_d_model, kernel_size=1)
-        self._status_encoding = nn.Linear(4 + 2 + 2, config.tf_d_model)
+    @classmethod
+    @property
+    def HEADING(cls):
+        return cls._HEADING
 
-        self._bev_semantic_head = nn.Sequential(
-            nn.Conv2d(
-                config.bev_features_channels,
-                config.bev_features_channels,
-                kernel_size=(3, 3),
-                stride=1,
-                padding=(1, 1),
-                bias=True,
-            ),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(
-                config.bev_features_channels,
-                config.num_bev_classes,
-                kernel_size=(1, 1),
-                stride=1,
-                padding=0,
-                bias=True,
-            ),
-            nn.Upsample(
-                size=(config.lidar_resolution_height // 2, config.lidar_resolution_width),
-                mode="bilinear",
-                align_corners=False,
-            ),
-        )
+    @classmethod
+    @property
+    def POINT(cls):
+        # assumes X, Y have subsequent indices
+        return slice(cls._X, cls._Y + 1)
 
-        tf_decoder_layer = nn.TransformerDecoderLayer(
-            d_model=config.tf_d_model,
-            nhead=config.tf_num_head,
-            dim_feedforward=config.tf_d_ffn,
-            dropout=config.tf_dropout,
-            batch_first=True,
-        )
-
-        self._tf_decoder = nn.TransformerDecoder(tf_decoder_layer, config.tf_num_layers)
-        self._agent_head = AgentHead(
-            num_agents=config.num_bounding_boxes,
-            d_ffn=config.tf_d_ffn,
-            d_model=config.tf_d_model,
-        )
-
-        self._trajectory_head = TrajectoryHead(
-            num_poses=config.trajectory_sampling.num_poses,
-            d_ffn=config.tf_d_ffn,
-            d_model=config.tf_d_model,
-            plan_anchor_path=config.plan_anchor_path,
-            config=config,
-        )
-        self.bev_proj = nn.Sequential(
-            *linear_relu_ln(256, 1, 1,320),
-        )
+    @classmethod
+    @property
+    def STATE_SE2(cls):
+        # assumes X, Y, HEADING have subsequent indices
+        return slice(cls._X, cls._HEADING + 1)
 
 
-    def forward(self, features: Dict[str, torch.Tensor], targets: Dict[str, torch.Tensor]=None) -> Dict[str, torch.Tensor]:
-        """Torch module forward pass."""
+class BoundingBoxIndex(IntEnum):
+    """Intenum of bounding boxes in logs."""
 
-        camera_feature: torch.Tensor = features["camera_feature"]
-        lidar_feature: torch.Tensor = features["lidar_feature"]
-        status_feature: torch.Tensor = features["status_feature"]
+    _X = 0
+    _Y = 1
+    _Z = 2
+    _LENGTH = 3
+    _WIDTH = 4
+    _HEIGHT = 5
+    _HEADING = 6
 
-        batch_size = status_feature.shape[0]
+    @classmethod
+    def size(cls):
+        valid_attributes = [
+            attribute
+            for attribute in dir(cls)
+            if attribute.startswith("_") and not attribute.startswith("__") and not callable(getattr(cls, attribute))
+        ]
+        return len(valid_attributes)
 
-        bev_feature_upscale, bev_feature, _ = self._backbone(camera_feature, lidar_feature)
-        cross_bev_feature = bev_feature_upscale
-        bev_spatial_shape = bev_feature_upscale.shape[2:]
-        concat_cross_bev_shape = bev_feature.shape[2:]
-        bev_feature = self._bev_downscale(bev_feature).flatten(-2, -1)
-        bev_feature = bev_feature.permute(0, 2, 1)
-        status_encoding = self._status_encoding(status_feature)
+    @classmethod
+    @property
+    def X(cls):
+        return cls._X
 
-        keyval = torch.concatenate([bev_feature, status_encoding[:, None]], dim=1)
-        keyval += self._keyval_embedding.weight[None, ...]
+    @classmethod
+    @property
+    def Y(cls):
+        return cls._Y
 
-        concat_cross_bev = keyval[:,:-1].permute(0,2,1).contiguous().view(batch_size, -1, concat_cross_bev_shape[0], concat_cross_bev_shape[1])
-        # upsample to the same shape as bev_feature_upscale
+    @classmethod
+    @property
+    def Z(cls):
+        return cls._Z
 
-        concat_cross_bev = F.interpolate(concat_cross_bev, size=bev_spatial_shape, mode='bilinear', align_corners=False)
-        # concat concat_cross_bev and cross_bev_feature
-        cross_bev_feature = torch.cat([concat_cross_bev, cross_bev_feature], dim=1)
+    @classmethod
+    @property
+    def LENGTH(cls):
+        return cls._LENGTH
 
-        cross_bev_feature = self.bev_proj(cross_bev_feature.flatten(-2,-1).permute(0,2,1))
-        cross_bev_feature = cross_bev_feature.permute(0,2,1).contiguous().view(batch_size, -1, bev_spatial_shape[0], bev_spatial_shape[1])
-        query = self._query_embedding.weight[None, ...].repeat(batch_size, 1, 1)
-        query_out = self._tf_decoder(query, keyval)
+    @classmethod
+    @property
+    def WIDTH(cls):
+        return cls._WIDTH
 
-        bev_semantic_map = self._bev_semantic_head(bev_feature_upscale)
-        trajectory_query, agents_query = query_out.split(self._query_splits, dim=1)
+    @classmethod
+    @property
+    def HEIGHT(cls):
+        return cls._HEIGHT
 
-        output: Dict[str, torch.Tensor] = {"bev_semantic_map": bev_semantic_map}
+    @classmethod
+    @property
+    def HEADING(cls):
+        return cls._HEADING
 
-        trajectory = self._trajectory_head(trajectory_query,agents_query, cross_bev_feature,bev_spatial_shape,status_encoding[:, None],targets=targets,global_img=None)
-        output.update(trajectory)
+    @classmethod
+    @property
+    def POINT2D(cls):
+        # assumes X, Y have subsequent indices
+        return slice(cls._X, cls._Y + 1)
 
-        agents = self._agent_head(agents_query)
-        output.update(agents)
+    @classmethod
+    @property
+    def POSITION(cls):
+        # assumes X, Y, Z have subsequent indices
+        return slice(cls._X, cls._Z + 1)
 
-        return output
+    @classmethod
+    @property
+    def DIMENSION(cls):
+        # assumes LENGTH, WIDTH, HEIGHT have subsequent indices
+        return slice(cls._LENGTH, cls._HEIGHT + 1)
 
-class AgentHead(nn.Module):
-    """Bounding box prediction head."""
 
-    def __init__(
-        self,
-        num_agents: int,
-        d_ffn: int,
-        d_model: int,
-    ):
-        """
-        Initializes prediction head.
-        :param num_agents: maximum number of agents to predict
-        :param d_ffn: dimensionality of feed-forward network
-        :param d_model: input dimensionality
-        """
-        super(AgentHead, self).__init__()
+class LidarIndex(IntEnum):
+    """Intenum for lidar point cloud arrays."""
 
-        self._num_objects = num_agents
-        self._d_model = d_model
-        self._d_ffn = d_ffn
+    _X = 0
+    _Y = 1
+    _Z = 2
+    _INTENSITY = 3
+    _RING = 4
+    _ID = 5
 
-        self._mlp_states = nn.Sequential(
-            nn.Linear(self._d_model, self._d_ffn),
-            nn.ReLU(),
-            nn.Linear(self._d_ffn, BoundingBox2DIndex.size()),
-        )
+    @classmethod
+    def size(cls):
+        valid_attributes = [
+            attribute
+            for attribute in dir(cls)
+            if attribute.startswith("_") and not attribute.startswith("__") and not callable(getattr(cls, attribute))
+        ]
+        return len(valid_attributes)
 
-        self._mlp_label = nn.Sequential(
-            nn.Linear(self._d_model, 1),
-        )
+    @classmethod
+    @property
+    def X(cls):
+        return cls._X
 
-    def forward(self, agent_queries) -> Dict[str, torch.Tensor]:
-        """Torch module forward pass."""
+    @classmethod
+    @property
+    def Y(cls):
+        return cls._Y
 
-        agent_states = self._mlp_states(agent_queries)
-        agent_states[..., BoundingBox2DIndex.POINT] = agent_states[..., BoundingBox2DIndex.POINT].tanh() * 32
-        agent_states[..., BoundingBox2DIndex.HEADING] = agent_states[..., BoundingBox2DIndex.HEADING].tanh() * np.pi
+    @classmethod
+    @property
+    def Z(cls):
+        return cls._Z
 
-        agent_labels = self._mlp_label(agent_queries).squeeze(dim=-1)
+    @classmethod
+    @property
+    def INTENSITY(cls):
+        return cls._INTENSITY
 
-        return {"agent_states": agent_states, "agent_labels": agent_labels}
+    @classmethod
+    @property
+    def RING(cls):
+        return cls._RING
+
+    @classmethod
+    @property
+    def ID(cls):
+        return cls._ID
+
+    @classmethod
+    @property
+    def POINT2D(cls):
+        # assumes X, Y have subsequent indices
+        return slice(cls._X, cls._Y + 1)
+
+    @classmethod
+    @property
+    def POSITION(cls):
+        # assumes X, Y, Z have subsequent indices
+        return slice(cls._X, cls._Z + 1)
+
+
+# class V2TransfuserModel(nn.Module):
+#     """Torch module for Transfuser."""
+
+#     def __init__(self, config: TransfuserConfig):
+#         """
+#         Initializes TransFuser torch module.
+#         :param config: global config dataclass of TransFuser.
+#         """
+
+#         super().__init__()
+
+#         self._query_splits = [
+#             1,
+#             config.num_bounding_boxes,
+#         ]
+
+#         self._config = config
+#         self._backbone = TransfuserBackbone(config)
+
+#         self._keyval_embedding = nn.Embedding(8**2 + 1, config.tf_d_model)  # 8x8 feature grid + trajectory
+#         self._query_embedding = nn.Embedding(sum(self._query_splits), config.tf_d_model)
+
+#         # usually, the BEV features are variable in size.
+#         self._bev_downscale = nn.Conv2d(512, config.tf_d_model, kernel_size=1)
+#         self._status_encoding = nn.Linear(4 + 2 + 2, config.tf_d_model)
+
+#         self._bev_semantic_head = nn.Sequential(
+#             nn.Conv2d(
+#                 config.bev_features_channels,
+#                 config.bev_features_channels,
+#                 kernel_size=(3, 3),
+#                 stride=1,
+#                 padding=(1, 1),
+#                 bias=True,
+#             ),
+#             nn.ReLU(inplace=True),
+#             nn.Conv2d(
+#                 config.bev_features_channels,
+#                 config.num_bev_classes,
+#                 kernel_size=(1, 1),
+#                 stride=1,
+#                 padding=0,
+#                 bias=True,
+#             ),
+#             nn.Upsample(
+#                 size=(config.lidar_resolution_height // 2, config.lidar_resolution_width),
+#                 mode="bilinear",
+#                 align_corners=False,
+#             ),
+#         )
+
+#         tf_decoder_layer = nn.TransformerDecoderLayer(
+#             d_model=config.tf_d_model,
+#             nhead=config.tf_num_head,
+#             dim_feedforward=config.tf_d_ffn,
+#             dropout=config.tf_dropout,
+#             batch_first=True,
+#         )
+
+#         self._tf_decoder = nn.TransformerDecoder(tf_decoder_layer, config.tf_num_layers)
+#         self._agent_head = AgentHead(
+#             num_agents=config.num_bounding_boxes,
+#             d_ffn=config.tf_d_ffn,
+#             d_model=config.tf_d_model,
+#         )
+
+#         self._trajectory_head = TrajectoryHead(
+#             num_poses=config.trajectory_sampling.num_poses,
+#             d_ffn=config.tf_d_ffn,
+#             d_model=config.tf_d_model,
+#             plan_anchor_path=config.plan_anchor_path,
+#             config=config,
+#         )
+#         self.bev_proj = nn.Sequential(
+#             *linear_relu_ln(256, 1, 1,320),
+#         )
+
+
+#     def forward(self, features: Dict[str, torch.Tensor], targets: Dict[str, torch.Tensor]=None) -> Dict[str, torch.Tensor]:
+#         """Torch module forward pass."""
+
+#         camera_feature: torch.Tensor = features["camera_feature"]
+#         lidar_feature: torch.Tensor = features["lidar_feature"]
+#         status_feature: torch.Tensor = features["status_feature"]
+
+#         batch_size = status_feature.shape[0]
+
+#         bev_feature_upscale, bev_feature, _ = self._backbone(camera_feature, lidar_feature)
+#         cross_bev_feature = bev_feature_upscale
+#         bev_spatial_shape = bev_feature_upscale.shape[2:]
+#         concat_cross_bev_shape = bev_feature.shape[2:]
+#         bev_feature = self._bev_downscale(bev_feature).flatten(-2, -1)
+#         bev_feature = bev_feature.permute(0, 2, 1)
+#         status_encoding = self._status_encoding(status_feature)
+
+#         keyval = torch.concatenate([bev_feature, status_encoding[:, None]], dim=1)
+#         keyval += self._keyval_embedding.weight[None, ...]
+
+#         concat_cross_bev = keyval[:,:-1].permute(0,2,1).contiguous().view(batch_size, -1, concat_cross_bev_shape[0], concat_cross_bev_shape[1])
+#         # upsample to the same shape as bev_feature_upscale
+
+#         concat_cross_bev = F.interpolate(concat_cross_bev, size=bev_spatial_shape, mode='bilinear', align_corners=False)
+#         # concat concat_cross_bev and cross_bev_feature
+#         cross_bev_feature = torch.cat([concat_cross_bev, cross_bev_feature], dim=1)
+
+#         cross_bev_feature = self.bev_proj(cross_bev_feature.flatten(-2,-1).permute(0,2,1))
+#         cross_bev_feature = cross_bev_feature.permute(0,2,1).contiguous().view(batch_size, -1, bev_spatial_shape[0], bev_spatial_shape[1])
+#         query = self._query_embedding.weight[None, ...].repeat(batch_size, 1, 1)
+#         query_out = self._tf_decoder(query, keyval)
+
+#         bev_semantic_map = self._bev_semantic_head(bev_feature_upscale)
+#         trajectory_query, agents_query = query_out.split(self._query_splits, dim=1)
+
+#         output: Dict[str, torch.Tensor] = {"bev_semantic_map": bev_semantic_map}
+
+#         trajectory = self._trajectory_head(trajectory_query,agents_query, cross_bev_feature,bev_spatial_shape,status_encoding[:, None],targets=targets,global_img=None)
+#         output.update(trajectory)
+
+#         agents = self._agent_head(agents_query)
+#         output.update(agents)
+
+#         return output
+
+# class AgentHead(nn.Module):
+#     """Bounding box prediction head."""
+
+#     def __init__(
+#         self,
+#         num_agents: int,
+#         d_ffn: int,
+#         d_model: int,
+#     ):
+#         """
+#         Initializes prediction head.
+#         :param num_agents: maximum number of agents to predict
+#         :param d_ffn: dimensionality of feed-forward network
+#         :param d_model: input dimensionality
+#         """
+#         super(AgentHead, self).__init__()
+
+#         self._num_objects = num_agents
+#         self._d_model = d_model
+#         self._d_ffn = d_ffn
+
+#         self._mlp_states = nn.Sequential(
+#             nn.Linear(self._d_model, self._d_ffn),
+#             nn.ReLU(),
+#             nn.Linear(self._d_ffn, BoundingBox2DIndex.size()),
+#         )
+
+#         self._mlp_label = nn.Sequential(
+#             nn.Linear(self._d_model, 1),
+#         )
+
+#     def forward(self, agent_queries) -> Dict[str, torch.Tensor]:
+#         """Torch module forward pass."""
+
+#         agent_states = self._mlp_states(agent_queries)
+#         agent_states[..., BoundingBox2DIndex.POINT] = agent_states[..., BoundingBox2DIndex.POINT].tanh() * 32
+#         agent_states[..., BoundingBox2DIndex.HEADING] = agent_states[..., BoundingBox2DIndex.HEADING].tanh() * np.pi
+
+#         agent_labels = self._mlp_label(agent_queries).squeeze(dim=-1)
+
+#         return {"agent_states": agent_states, "agent_labels": agent_labels}
 
 class DiffMotionPlanningRefinementModule(nn.Module):
     def __init__(
@@ -218,6 +401,7 @@ class DiffMotionPlanningRefinementModule(nn.Module):
         self,
         traj_feature,
     ):
+    
         bs, ego_fut_mode, _ = traj_feature.shape
 
         # 6. get final prediction
@@ -279,8 +463,8 @@ class CustomTransformerDecoderLayer(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.dropout1 = nn.Dropout(0.1)
         self.cross_bev_attention = GridSampleCrossBEVAttention(
-            config.tf_d_model,
-            config.tf_num_head,
+            256,
+            8,
             num_points=num_poses,
             config=config,
             in_bev_dims=256,
@@ -322,6 +506,10 @@ class CustomTransformerDecoderLayer(nn.Module):
                 time_embed, 
                 status_encoding,
                 global_img=None):
+        print(traj_feature.shape)
+        print(noisy_traj_points.shape)
+        print(bev_feature.shape)
+        print(bev_spatial_shape)
         traj_feature = self.cross_bev_attention(traj_feature,noisy_traj_points,bev_feature,bev_spatial_shape)
         traj_feature = traj_feature + self.dropout(self.cross_agent_attention(traj_feature, agents_query,agents_query)[0])
         traj_feature = self.norm1(traj_feature)
@@ -339,8 +527,10 @@ class CustomTransformerDecoderLayer(nn.Module):
         
         # 4.9 predict the offset & heading
         poses_reg, poses_cls = self.task_decoder(traj_feature) #bs,20,8,3; bs,20
+        print(poses_reg.shape)
+        print(poses_cls.shape)
         poses_reg[...,:2] = poses_reg[...,:2] + noisy_traj_points
-        poses_reg[..., StateSE2Index.HEADING] = poses_reg[..., StateSE2Index.HEADING].tanh() * np.pi
+        poses_reg[..., 2] = poses_reg[..., 2].tanh() * np.pi
 
         return poses_reg, poses_cls
 def _get_clones(module, N):
@@ -392,9 +582,9 @@ class TrajectoryHead(nn.Module):
         """
         super(TrajectoryHead, self).__init__()
 
-        self._num_poses = num_poses
-        self._d_model = d_model
-        self._d_ffn = d_ffn
+        self._num_poses = 8
+        self._d_model = 256
+        self._d_ffn = 1024
         self.diff_loss_weight = 2.0
         self.ego_fut_mode = 20
 
@@ -453,13 +643,14 @@ class TrajectoryHead(nn.Module):
         return torch.cat([odo_info_fut_x, odo_info_fut_y, odo_info_fut_head], dim=-1)
     def forward(self, ego_query, agents_query, bev_feature,bev_spatial_shape,status_encoding, targets=None,global_img=None) -> Dict[str, torch.Tensor]:
         """Torch module forward pass."""
-        if self.training:
+        if not self.training:
             return self.forward_train(ego_query, agents_query, bev_feature,bev_spatial_shape,status_encoding,targets,global_img)
         else:
             return self.forward_test(ego_query, agents_query, bev_feature,bev_spatial_shape,status_encoding,global_img)
 
 
     def forward_train(self, ego_query,agents_query,bev_feature,bev_spatial_shape,status_encoding, targets=None,global_img=None) -> Dict[str, torch.Tensor]:
+        print("ASDFASDFA")
         bs = ego_query.shape[0]
         device = ego_query.device
         # 1. add truncated noise to the plan anchor
@@ -490,6 +681,7 @@ class TrajectoryHead(nn.Module):
 
 
         # 4. begin the stacked decoder
+
         poses_reg_list, poses_cls_list = self.diff_decoder(traj_feature, noisy_traj_points, bev_feature, bev_spatial_shape, agents_query, ego_query, time_embed, status_encoding,global_img)
 
         trajectory_loss_dict = {}
@@ -523,6 +715,7 @@ class TrajectoryHead(nn.Module):
         noisy_trajs = self.denorm_odo(img)
         ego_fut_mode = img.shape[1]
         for k in roll_timesteps[:]:
+            print("asdf")
             x_boxes = torch.clamp(img, min=-1, max=1)
             noisy_traj_points = self.denorm_odo(x_boxes)
 
@@ -557,5 +750,7 @@ class TrajectoryHead(nn.Module):
             ).prev_sample
         mode_idx = poses_cls.argmax(dim=-1)
         mode_idx = mode_idx[...,None,None,None].repeat(1,1,self._num_poses,3)
-        best_reg = torch.gather(poses_reg, 1, mode_idx).squeeze(1)
-        return {"trajectory": best_reg}
+        
+        # best_reg = torch.gather(poses_reg, 1, mode_idx).squeeze(1)
+        
+        return {"trajectory": poses_reg}

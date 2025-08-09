@@ -26,6 +26,7 @@ class Track(Enum):
     SENSORS = 'SENSORS'
     MAP = 'MAP'
 
+
 class AutonomousAgent(object):
 
     """
@@ -52,7 +53,6 @@ class AutonomousAgent(object):
             Track.SENSORS : CAMERAS, LIDAR, RADAR, GPS and IMU sensors are allowed
             Track.MAP : OpenDRIVE map is also allowed
         """
-        pass
 
     def sensors(self):  # pylint: disable=no-self-use
         """
@@ -73,7 +73,6 @@ class AutonomousAgent(object):
 
         """
         sensors = []
-
         return sensors
 
     def run_step(self, input_data, timestamp):
@@ -122,5 +121,6 @@ class AutonomousAgent(object):
         Set the plan (route) for the agent
         """
         ds_ids = downsample_route(global_plan_world_coord, 50)
-        self._global_plan_world_coord = [(global_plan_world_coord[x][0], global_plan_world_coord[x][1]) for x in ds_ids]
+        self._global_plan_world_coord = [
+            (global_plan_world_coord[x][0], global_plan_world_coord[x][1]) for x in ds_ids]
         self._global_plan = [global_plan_gps[x] for x in ds_ids]

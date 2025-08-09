@@ -125,8 +125,8 @@ def main():
         config.detailed_losses_weights[index_bev] = 0.0
 
     # Create model and optimizers
-    model = LidarCenterNet(config, device, args.backbone, 'transfuser/model_ckpt/models_2022/transfuser/model_seed1_39.pth', args.image_architecture, args.lidar_architecture, bool(args.use_velocity))
-
+    model = LidarCenterNet(config, device, args.backbone, backbone_path='diffusiondrive', image_architecture=args.image_architecture, lidar_architecture=args.lidar_architecture, use_velocity=bool(args.use_velocity))
+    
     if (parallel == True):
         # Synchronizing the Batch Norms increases the Batch size with which they are compute by *num_gpus
         if(bool(args.sync_batch_norm) == True):
@@ -199,16 +199,16 @@ def main():
                 g['lr'] = new_lr
         trainer.train()
 
-        if((args.setting != 'all') and (epoch % args.val_every == 0)):
-            trainer.validate()
+        # if((args.setting != 'all') and (epoch % args.val_every == 0)):
+        #     trainer.validate()
 
-        if (parallel == True):
-            if (bool(args.zero_redundancy_optimizer) == True):
-                optimizer.consolidate_state_dict(0) # To save the whole optimizer we need to gather it on GPU 0.
-            if (rank == 0):
-                trainer.save()
-        else:
-            trainer.save()
+        # if (parallel == True):
+        #     if (bool(args.zero_redundancy_optimizer) == True):
+        #         optimizer.consolidate_state_dict(0) # To save the whole optimizer we need to gather it on GPU 0.
+        #     if (rank == 0):
+        #         trainer.save()
+        # else:
+        #     trainer.save()
 
 class Engine(object):
     """
@@ -271,11 +271,15 @@ class Engine(object):
         ego_vel = data['speed'].to(self.device, dtype=torch.float32)
 
         if ((self.args.backbone == 'transFuser') or (self.args.backbone == 'late_fusion') or (self.args.backbone == 'latentTF')):
-            losses = self.model(rgb, lidar, ego_waypoint=ego_waypoint, target_point=target_point,
+            # losses = self.model(rgb, lidar, ego_waypoint=ego_waypoint, target_point=target_point,
+            #                target_point_image=target_point_image,
+            #                ego_vel=ego_vel.reshape(-1, 1), bev=bev,
+            #                label=label, save_path=self.vis_save_path,
+            #                depth=depth, semantic=semantic, num_points=num_points)
+            losses = self.model(rgb, lidar, target_point=target_point,
                            target_point_image=target_point_image,
-                           ego_vel=ego_vel.reshape(-1, 1), bev=bev,
-                           label=label, save_path=self.vis_save_path,
-                           depth=depth, semantic=semantic, num_points=num_points)
+                           ego_vel=ego_vel.reshape(-1, 1), ego_acc=data['acceleration'], theta = data['theta'], save_path=self.vis_save_path, num_points=num_points)
+    
         elif (self.args.backbone == 'geometric_fusion'):
 
             bev_points = data['bev_points'].long().to('cuda', dtype=torch.int64)
@@ -294,7 +298,7 @@ class Engine(object):
 
     def train(self):
         self.model.train()
-
+        
         num_batches = 0
         loss_epoch = 0.0
         detailed_losses_epoch  = {key: 0.0 for key in self.detailed_losses}
@@ -302,6 +306,7 @@ class Engine(object):
 
         # Train loop
         for data in tqdm(self.dataloader_train):
+            
             self.optimizer.zero_grad(set_to_none=True)
             losses = self.load_data_compute_loss(data)
             loss = torch.tensor(0.0).to(self.device, dtype=torch.float32)
@@ -310,12 +315,16 @@ class Engine(object):
                 loss += self.detailed_weights[key] * value
                 detailed_losses_epoch[key] += float(self.detailed_weights[key] * value.item())
             loss.backward()
+            print("asdfasdfa")
 
+    
             self.optimizer.step()
             num_batches += 1
             loss_epoch += float(loss.item())
+           
 
         self.log_losses(loss_epoch, detailed_losses_epoch, num_batches, '')
+        print("ASDFASDFASDFASDFASDFASDF")
 
 
     @torch.inference_mode() # Faster version of torch_no_grad
@@ -340,7 +349,8 @@ class Engine(object):
             loss_epoch += float(loss.item())
 
         self.log_losses(loss_epoch, detailed_val_losses_epoch, num_batches, 'val_')
-
+        
+        
     def log_losses(self, loss_epoch, detailed_losses_epoch, num_batches, prefix=''):
         # Average all the batches into one number
         loss_epoch = loss_epoch / num_batches
@@ -395,5 +405,13 @@ if __name__ == "__main__":
     # The default method fork can run into deadlocks.
     # To use the dataloader with multiple workers forkserver or spawn should be used.
     mp.set_start_method('fork')
+    import sys
+
+    # Redirect all output (print, errors, etc.) to a log file
+    log_file = open('output_log.txt', 'w')
+    sys.stdout = log_file
+    sys.stderr = log_file
+
     print("Start method of multiprocessing:", mp.get_start_method())
     main()
+    print("fINHASDFINASDFADFNADWIFNOANOFN")

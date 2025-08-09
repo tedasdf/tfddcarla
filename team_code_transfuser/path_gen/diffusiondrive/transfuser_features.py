@@ -2,7 +2,6 @@ from enum import IntEnum
 from typing import Any, Dict, List, Tuple
 import cv2
 import numpy as np
-import numpy.typing as npt
 
 import torch
 from torchvision import transforms
@@ -11,9 +10,9 @@ from shapely import affinity
 from shapely.geometry import Polygon, LineString
 
 
-from navsim.agents.diffusiondrive.transfuser_config import TransfuserConfig
-from navsim.common.dataclasses import AgentInput
-from navsim.common.enums import LidarIndex
+from path_gen.diffusiondrive.transfuser_config import TransfuserConfig
+from path_gen.common.dataclasses import AgentInput
+from path_gen.common.enums import LidarIndex
 from navsim.planning.training.abstract_feature_target_builder import AbstractFeatureBuilder
 
 

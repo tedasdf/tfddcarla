@@ -77,17 +77,19 @@ class GridSampleCrossBEVAttention(nn.Module):
             spatial_shapes: (height, width)
 
         """
-
+        
+      
         bs, num_queries, num_points, _ = traj_points.shape
         
         # Normalize trajectory points to [-1, 1] range for grid_sample
         normalized_trajectory = traj_points.clone()
-        normalized_trajectory[..., 0] = normalized_trajectory[..., 0] / self.config.lidar_max_y
-        normalized_trajectory[..., 1] = normalized_trajectory[..., 1] / self.config.lidar_max_x
+        normalized_trajectory[..., 0] = normalized_trajectory[..., 0] / 32
+        normalized_trajectory[..., 1] = normalized_trajectory[..., 1] / 32
 
         normalized_trajectory = normalized_trajectory[..., [1, 0]]  # Swap x and y
         
         attention_weights = self.attention_weights(queries)
+ 
         attention_weights = attention_weights.view(bs, num_queries, num_points).softmax(-1)
 
         value = self.value_proj(bev_feature)

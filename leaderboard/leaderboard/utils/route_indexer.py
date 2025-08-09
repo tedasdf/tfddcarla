@@ -33,6 +33,7 @@ class RouteIndexer():
                 self._configs_dict['{}.{}'.format(config.name, repetition)] = copy.copy(config)
 
         self._configs_list = list(self._configs_dict.items())
+        print(len(self._configs_list))
 
     def peek(self):
         return not (self._index >= len(self._configs_list))

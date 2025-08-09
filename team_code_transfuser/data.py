@@ -50,7 +50,7 @@ class CARLA_Data(Dataset):
             root_files = os.listdir(sub_root)
             routes = [folder for folder in root_files if not os.path.isfile(os.path.join(sub_root,folder))]
             for route in routes:
-                route_dir = sub_root / route
+                route_dir = sub_root
                 num_seq = len(os.listdir(route_dir / "lidar"))
 
                 # ignore the first two and last two frame
@@ -333,6 +333,7 @@ class CARLA_Data(Dataset):
         data['theta'] = measurements[self.seq_len-1]['theta']
         data['x_command'] = measurements[self.seq_len-1]['x_command']
         data['y_command'] = measurements[self.seq_len-1]['y_command']
+        data['acceleration'] = measurements[self.seq_len-1]['acceleration']
 
         # target points
         # convert x_command, y_command to local coordinates

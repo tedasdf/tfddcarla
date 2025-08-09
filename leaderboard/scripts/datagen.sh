@@ -1,5 +1,5 @@
-export CARLA_ROOT=${1:-/home/kchitta/Documents/CARLA_0.9.10.1}
-export WORK_DIR=${2:-/home/kchitta/Documents/transfuser}
+export CARLA_ROOT=${1:-/home/fypits25/Documents/tfddcarla/carla}
+export WORK_DIR=${2:-/home/fypits25/Documents/tfddcarla}
 
 export CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh
 export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI
@@ -17,7 +17,7 @@ export CHECKPOINT_ENDPOINT=${WORK_DIR}/results/Town10HD_Scenario10.json
 export SAVE_PATH=${WORK_DIR}/results/Town10HD_Scenario10
 export TEAM_AGENT=${WORK_DIR}/team_code_autopilot/data_agent.py
 export DEBUG_CHALLENGE=0
-export RESUME=1
+export RESUME=0
 export DATAGEN=1
 
 python3 ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \

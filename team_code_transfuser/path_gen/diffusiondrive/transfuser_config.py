@@ -2,16 +2,16 @@ from dataclasses import dataclass
 from typing import Tuple, List
 
 import numpy as np
-from nuplan.common.maps.abstract_map import SemanticMapLayer
-from nuplan.common.actor_state.tracked_objects_types import TrackedObjectType
-from nuplan.planning.simulation.trajectory.trajectory_sampling import TrajectorySampling
+# from nuplan.common.maps.abstract_map import SemanticMapLayer
+# from nuplan.common.actor_state.tracked_objects_types import TrackedObjectType
+# from nuplan.planning.simulation.trajectory.trajectory_sampling import TrajectorySampling
 
 
 @dataclass
 class TransfuserConfig:
     """Global TransFuser config."""
 
-    trajectory_sampling: TrajectorySampling = TrajectorySampling(time_horizon=4, interval_length=0.5)
+    # trajectory_sampling: TrajectorySampling = TrajectorySampling(time_horizon=4, interval_length=0.5)
 
     image_architecture: str = "resnet34"
     lidar_architecture: str = "resnet34"
@@ -88,22 +88,22 @@ class TransfuserConfig:
     bev_semantic_weight: float = 14.0
     use_ema: bool = False
     # BEV mapping
-    bev_semantic_classes = {
-        1: ("polygon", [SemanticMapLayer.LANE, SemanticMapLayer.INTERSECTION]),  # road
-        2: ("polygon", [SemanticMapLayer.WALKWAYS]),  # walkways
-        3: ("linestring", [SemanticMapLayer.LANE, SemanticMapLayer.LANE_CONNECTOR]),  # centerline
-        4: (
-            "box",
-            [
-                TrackedObjectType.CZONE_SIGN,
-                TrackedObjectType.BARRIER,
-                TrackedObjectType.TRAFFIC_CONE,
-                TrackedObjectType.GENERIC_OBJECT,
-            ],
-        ),  # static_objects
-        5: ("box", [TrackedObjectType.VEHICLE]),  # vehicles
-        6: ("box", [TrackedObjectType.PEDESTRIAN]),  # pedestrians
-    }
+    # bev_semantic_classes = {
+    #     1: ("polygon", [SemanticMapLayer.LANE, SemanticMapLayer.INTERSECTION]),  # road
+    #     2: ("polygon", [SemanticMapLayer.WALKWAYS]),  # walkways
+    #     3: ("linestring", [SemanticMapLayer.LANE, SemanticMapLayer.LANE_CONNECTOR]),  # centerline
+    #     4: (
+    #         "box",
+    #         [
+    #             TrackedObjectType.CZONE_SIGN,
+    #             TrackedObjectType.BARRIER,
+    #             TrackedObjectType.TRAFFIC_CONE,
+    #             TrackedObjectType.GENERIC_OBJECT,
+    #         ],
+    #     ),  # static_objects
+    #     5: ("box", [TrackedObjectType.VEHICLE]),  # vehicles
+    #     6: ("box", [TrackedObjectType.PEDESTRIAN]),  # pedestrians
+    # }
 
     bev_pixel_width: int = lidar_resolution_width
     bev_pixel_height: int = lidar_resolution_height // 2

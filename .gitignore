@@ -164,3 +164,10 @@ model_ckpt/
 data/
 
 temp_store/
+
+# Carla
+carla/*
+
+old/*
+team_code_transfuser/logdir/transfuser
+team_code_transfuser/output_log.txt
