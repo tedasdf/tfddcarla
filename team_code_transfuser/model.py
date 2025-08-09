@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import cv2
 import math
 
+
 from path_gen.og import GRUDecoder
 from path_gen.diffusiondrive.modules.blocks import linear_relu_ln
 from utils import *
@@ -13,6 +14,7 @@ from late_fusion import LateFusionBackbone
 from latentTF import latentTFBackbone
 from copy import deepcopy
 from point_pillar import PointPillarNet
+from vlm_integration import VLM
 import time
 
 from PIL import Image, ImageFont, ImageDraw
@@ -671,7 +673,9 @@ class LidarCenterNet(nn.Module):
             )
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-
+        
+        # VLM 
+        self.vlm = VLM('llama3.2-vision')
         # pid controller
         self.turn_controller = PIDController(
             K_P=config.turn_KP, K_I=config.turn_KI, K_D=config.turn_KD, n=config.turn_n)
@@ -936,8 +940,12 @@ class LidarCenterNet(nn.Module):
 
         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
 
-        # pred_wp = vlm(forward_pass["trajectory"], rgb)
+        responses = self.vlm.step(rgb)
 
+        # Evaluation function update
+
+        # filter the best path from eval function
+        
         return 0, 0
 
         return pred_wp, rotated_bboxes
