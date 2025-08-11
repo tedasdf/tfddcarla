@@ -11,6 +11,8 @@ import json
 import math
 import xml.etree.ElementTree as ET
 
+import re
+
 import carla
 from agents.navigation.local_planner import RoadOption
 from srunner.scenarioconfigs.route_scenario_configuration import RouteScenarioConfiguration
@@ -54,15 +56,21 @@ class RouteParser(object):
 
         list_route_descriptions = []
         tree = ET.parse(route_filename)
+
+        re
         for route in tree.iter("route"):
 
             route_id = route.attrib['id']
             if single_route and route_id != single_route:
                 continue
 
+            match = re.search(r'([^/]+/[^/]+)\.json$', scenario_file)
+            name = match.group(1)
+            substr = name.index("/")
+
             new_config = RouteScenarioConfiguration()
             new_config.town = route.attrib['town']
-            new_config.name = "RouteScenario_{}".format(route_id)
+            new_config.name = "RouteScenario_{}_{}_{}".format(route.attrib["town"], route_id, name[substr:])
             new_config.weather = RouteParser.parse_weather(route)
             new_config.scenario_file = scenario_file
 

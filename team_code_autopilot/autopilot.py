@@ -9,6 +9,7 @@ from collections import deque, defaultdict
 import math
 import numpy as np
 import carla
+import re
 
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from leaderboard.autoagents import autonomous_agent, autonomous_agent_local
@@ -114,6 +115,7 @@ class AutoPilot(autonomous_agent_local.AutonomousAgent):
         self._vehicle_lights = carla.VehicleLightState.Position | carla.VehicleLightState.LowBeam
 
         if SAVE_PATH is not None:
+            
             now = datetime.datetime.now()
             string = pathlib.Path(os.environ['ROUTES']).stem + '_'
             string += f'route{self.route_index}_'

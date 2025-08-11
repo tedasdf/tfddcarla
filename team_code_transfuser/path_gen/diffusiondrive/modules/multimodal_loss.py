@@ -131,7 +131,7 @@ class LossComputer(nn.Module):
         targets['trajectory']: (bs, 8, 3)
         """
         bs, num_mode, ts, d = poses_reg.shape
-        target_traj = targets["trajectory"]
+        target_traj = targets
         dist = torch.linalg.norm(target_traj.unsqueeze(1)[...,:2] - plan_anchor, dim=-1)
         dist = dist.mean(dim=-1)
         mode_idx = torch.argmin(dist, dim=-1)

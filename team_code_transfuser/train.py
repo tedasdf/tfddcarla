@@ -199,16 +199,16 @@ def main():
                 g['lr'] = new_lr
         trainer.train()
 
-        # if((args.setting != 'all') and (epoch % args.val_every == 0)):
-        #     trainer.validate()
+        if((args.setting != 'all') and (epoch % args.val_every == 0)):
+            trainer.validate()
 
-        # if (parallel == True):
-        #     if (bool(args.zero_redundancy_optimizer) == True):
-        #         optimizer.consolidate_state_dict(0) # To save the whole optimizer we need to gather it on GPU 0.
-        #     if (rank == 0):
-        #         trainer.save()
-        # else:
-        #     trainer.save()
+        if (parallel == True):
+            if (bool(args.zero_redundancy_optimizer) == True):
+                optimizer.consolidate_state_dict(0) # To save the whole optimizer we need to gather it on GPU 0.
+            if (rank == 0):
+                trainer.save()
+        else:
+            trainer.save()
 
 class Engine(object):
     """
@@ -270,16 +270,43 @@ class Engine(object):
 
         ego_vel = data['speed'].to(self.device, dtype=torch.float32)
 
+    
+        collected_waypoint = data['collected_waypoint'].to(self.device,dtype=torch.float32)
+
+        print(collected_waypoint)    
         if ((self.args.backbone == 'transFuser') or (self.args.backbone == 'late_fusion') or (self.args.backbone == 'latentTF')):
-            # losses = self.model(rgb, lidar, ego_waypoint=ego_waypoint, target_point=target_point,
-            #                target_point_image=target_point_image,
-            #                ego_vel=ego_vel.reshape(-1, 1), bev=bev,
-            #                label=label, save_path=self.vis_save_path,
-            #                depth=depth, semantic=semantic, num_points=num_points)
-            losses = self.model(rgb, lidar, target_point=target_point,
+            if False:
+                # losses = self.model.forward_ego(rgb, lidar, target_point=target_point,
+                #             target_point_image=target_point_image,
+                #             ego_vel=ego_vel.reshape(-1, 1), bev=bev,
+                #             label=label, save_path=self.vis_save_path,
+                #             depth=depth, semantic=semantic, num_points=num_points)
+                losses = self.model.forward_ego(rgb, lidar, target_point=target_point,
                            target_point_image=target_point_image,
                            ego_vel=ego_vel.reshape(-1, 1), ego_acc=data['acceleration'], theta = data['theta'], save_path=self.vis_save_path, num_points=num_points)
-    
+            else:
+                print("EGO WAYPOINT")
+                print(ego_waypoint)
+
+                print(ego_waypoint.shape)
+
+
+                print("Collected_waypoint")
+                print(collected_waypoint.shape)
+            
+                losses = self.model( 
+                    rgb=rgb, 
+                    lidar_bev=lidar, 
+                    ego_waypoint=collected_waypoint, 
+                    target_point=target_point, 
+                    ego_vel=ego_vel.reshape(-1, 1), 
+                    ego_acc=data['acceleration'], 
+                    theta = data['theta'], 
+                    target_point_image=target_point_image, 
+                    bev=bev, label=label, 
+                    depth=depth, 
+                    semantic=semantic, 
+                    num_points=num_points)
         elif (self.args.backbone == 'geometric_fusion'):
 
             bev_points = data['bev_points'].long().to('cuda', dtype=torch.int64)
@@ -315,7 +342,7 @@ class Engine(object):
                 loss += self.detailed_weights[key] * value
                 detailed_losses_epoch[key] += float(self.detailed_weights[key] * value.item())
             loss.backward()
-            print("asdfasdfa")
+    
 
     
             self.optimizer.step()
@@ -324,7 +351,7 @@ class Engine(object):
            
 
         self.log_losses(loss_epoch, detailed_losses_epoch, num_batches, '')
-        print("ASDFASDFASDFASDFASDFASDF")
+
 
 
     @torch.inference_mode() # Faster version of torch_no_grad

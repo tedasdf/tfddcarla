@@ -342,6 +342,8 @@ class LeaderboardEvaluator(object):
 
             if args.record:
                 self.client.stop_recorder()
+            
+            
 
             self._cleanup()
             sys.exit(-1)

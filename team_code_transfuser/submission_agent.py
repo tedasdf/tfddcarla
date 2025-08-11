@@ -15,8 +15,10 @@ from leaderboard.autoagents import autonomous_agent
 from model import LidarCenterNet
 from config import GlobalConfig
 from data import lidar_to_histogram_features, draw_target_point, lidar_bev_cam_correspondences
-
 from shapely.geometry import Polygon
+from vlm_integration import VLM
+from traj_eval import TrajectoryScoring
+
 
 import itertools
 import pathlib
@@ -108,11 +110,12 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         self.rgb_back = None #For debugging
 
 
-
     def _init(self):
         self._route_planner = RoutePlanner(self.config.route_planner_min_distance, self.config.route_planner_max_distance)
         self._route_planner.set_route(self._global_plan, True)
         self.initialized = True
+        self.vlm = VLM("llama3.2-vision")
+        self.trajscore = TrajectoryScoring()
 
     def _get_position(self, tick_data):
         gps = tick_data['gps']
@@ -275,7 +278,6 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                 num_points = [torch.tensor(len(lidar_cloud)).to('cuda', dtype=torch.int32)]
             else:
                 lidar_bev = self.prepare_lidar(tick_data)
-
         
         # prepare goal location input
         target_point_image, target_point = self.prepare_goal_location(tick_data)
@@ -295,15 +297,15 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             is_stuck = True
             self.forced_move += 1
 
-
         # forward pass
+        model = self.config.model
         with torch.no_grad():
             pred_wps = []
             bounding_boxes = []
             for i in range(self.model_count):
                 rotated_bb = []
                 if (self.backbone == 'transFuser'):
-                    pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
+                    pred_wp, _ = self.nets[i].forward_ego(model, image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
                                                           num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,
                                                           forced_move=is_stuck, debug=self.config.debug, rgb_back=self.rgb_back)
                 elif (self.backbone == 'late_fusion'):
@@ -326,7 +328,13 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
 
                 pred_wps.append(pred_wp)
                 bounding_boxes.append(rotated_bb)
-        return 
+            pred_wps = diffusion(backbone_output)
+            vlm_responses = self.vlm.step(image)
+            self.trajscore.update_weights(vlm_responses)
+            best_wp = self.trajscore.compute_scores(pred_wp)
+            
+
+        return best_wp
 
         bbs_vehicle_coordinate_system = self.non_maximum_suppression(bounding_boxes, self.iou_treshold_nms)
 

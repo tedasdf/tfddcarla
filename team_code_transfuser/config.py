@@ -260,3 +260,5 @@ class GlobalConfig:
 
         for k,v in kwargs.items():
             setattr(self, k, v)
+
+model = "vlm_model"

@@ -7,7 +7,7 @@
   "load_file": null,
   "start_epoch": 0,
   "setting": "all",
-  "root_dir": "../results",
+  "root_dir": "../result_test",
   "schedule": 1,
   "schedule_reduce_epoch_01": 30,
   "schedule_reduce_epoch_02": 40,
