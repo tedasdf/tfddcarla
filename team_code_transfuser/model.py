@@ -804,13 +804,16 @@ class LidarCenterNet(nn.Module):
             # need status_feature
             #
            
-            driving_command = torch.tensor([0, 1, 0, 0], dtype=torch.float32, device='cuda')  # shape [4]
+            driving_command = torch.tensor([0, 0, 0, 0], dtype=torch.float32, device='cuda')  # shape [4]
             driving_command = driving_command.unsqueeze(1).repeat(1, 10)  # shape [4, 10]
-
-            # if target_point[0] >= x_threshhold:
-            #     driving_command = [0, 0, 1, 0]
-            # elif target_point[0] <= -x_threshhold:
-            #     driving_command = [1, 0, 0, 0]
+            for i in driving command:
+              
+              if i[0] >= x_threshhold:
+                  driving_command = [0, 0, 1, 0]
+              elif i[0] <= -x_threshhold:
+                  driving_command = [1, 0, 0, 0]
+              else :
+                  driving_command = [0, 1, 0 , 0]
             # Only use the first two axes: X and Y
             # xy = torch.stack(ego_acc[:2])  # shape: (2, 10)
 
