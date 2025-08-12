@@ -17,7 +17,7 @@ class TrajectoryScoring:
 
         self.speed_history = deque(maxlen=12)  # Store the last average speeds
         self.sample = {}
-        self.best_trajectory_queue = deque(maxlen=3)  # Queue for saving the best trajectories, maximum 3 entrie
+        self.best_trajectory_queue = deque(maxlen=3) 
 
     def update_weights(self, response):
         raw_json = response[-1]["message"]["content"]
@@ -38,6 +38,68 @@ class TrajectoryScoring:
         print(f"Weight_Lat: {self.weights["w_lat"]}")
         print(f"Weight_Lon: {self.weights["w_lon"]}")
         print(f"Weight_Cent: {self.weights["w_cent"]}")
+    
+    def compute_scores(self, pred_trajectories):
+        weights = self.weights
+
+        #target_point = self.sample['target_info'] 
+        # If there are best trajectories from the previous frame in the queue, add them to the trajectory list of the current frame.
+        if self.best_trajectory_queue:
+            previous_best_trajectories = np.array(self.best_trajectory_queue)
+            pred_trajectories = np.concatenate([previous_best_trajectories, pred_trajectories], axis=0)
+        
+        # Calculate average speeds for each trajectory
+        average_speeds = self.calculate_average_speeds(pred_trajectories)
+
+        # Update the speed range based on historical average speeds
+        if self.speed_history:
+            historical_avg_speed = np.mean(self.speed_history)
+            self.speed_range = (0.8 * historical_avg_speed, 1.2 * historical_avg_speed)
+        else:
+            # If there's no history yet, use the current average speeds
+            current_avg_speed = np.mean(average_speeds)
+            self.speed_range = (0.8 * current_avg_speed, 1.2 * current_avg_speed)
+
+        scores = []
+        for i, pred_traj in enumerate(pred_trajectories):
+            target_distance = self.calculate_distance_to_target(pred_traj.cpu(), target_point)
+            # 计算当前轨迹的角度偏离度
+            angle_deviation_cost = self.calculate_angle_deviation(pred_traj.cpu(), pred_traj[0].cpu(), target_point)
+            collision = self.calculate_collisions_with_agents()[i]
+
+            # Calculate speed cost for the current trajectory
+            speed_cost = self.calculate_speed_cost([average_speeds[i]], self.speed_range)[0]
+
+            # Calculate dynamics for the trajectory
+            long_velocities, lat_velocities, long_accelerations, lat_accelerations, long_jerks, lat_jerks = self.calculate_dynamics(pred_traj.cpu())
+
+            # Calculate comfort costs
+            lat_comfort = self.lat_comfort_cost(long_velocities, lat_velocities, long_accelerations, lat_jerks)
+            lon_comfort = self.lon_comfort_cost(long_jerks)
+
+            # Calculate centripetal acceleration cost for the current trajectory
+            speeds = self.calculate_speeds(np.expand_dims(pred_traj.cpu(), axis=0))[0]
+            centripetal_acceleration_cost = self.calculate_centripetal_acceleration_cost(pred_traj.cpu(), speeds)
+
+            # Calculate total score
+            total_score = ( weights['target_distance'] * target_distance +
+                            weights['collision'] * collision +
+                            weights['speed'] * speed_cost + 
+                            weights['lat_comfort'] * lat_comfort + 
+                            weights['lon_comfort'] * lon_comfort + 
+                            weights['centripetal_acceleration'] * centripetal_acceleration_cost +
+                            weights['angle_deviation'] * angle_deviation_cost
+                           )
+            
+            scores.append(total_score)
+
+        # Update the historical average speed
+        self.speed_history.append(np.mean(average_speeds))
+        # 在得分计算结束后，找到成本最小的轨迹并更新队列
+        min_score_idx = np.argmin(scores[len(self.best_trajectory_queue):])  # 忽略队列中的轨迹
+        self.best_trajectory_queue.append(pred_trajectories[min_score_idx])
+
+        return scores
     
     def calculate_angle_deviation(self, trajectory, current_position, target_position):
         target_vector = np.array(target_position) - np.array(current_position)
@@ -213,70 +275,6 @@ class TrajectoryScoring:
 
         k = np.linalg.norm(np.cross(p2 - p1, p3 - p2)) / np.linalg.norm(p2 - p1)**2
         return k
-
-    def compute_scores(self, paths):
-        weights = self.weights
-       
-        pred_trajectories = self.sample['pred_ego_fut_trajs']
-        #target_point = self.sample['target_info'] 
-        
-        # 如果队列中有上一帧的最佳轨迹，将它们添加到当前帧的轨迹列表中
-        if self.best_trajectory_queue:
-            previous_best_trajectories = np.array(self.best_trajectory_queue)
-            pred_trajectories = np.concatenate([previous_best_trajectories, pred_trajectories], axis=0)
-        
-        # Calculate average speeds for each trajectory
-        average_speeds = self.calculate_average_speeds(pred_trajectories)
-
-        # Update the speed range based on historical average speeds
-        if self.speed_history:
-            historical_avg_speed = np.mean(self.speed_history)
-            self.speed_range = (0.8 * historical_avg_speed, 1.2 * historical_avg_speed)
-        else:
-            # If there's no history yet, use the current average speeds
-            current_avg_speed = np.mean(average_speeds)
-            self.speed_range = (0.8 * current_avg_speed, 1.2 * current_avg_speed)
-
-        scores = []
-        for i, pred_traj in enumerate(pred_trajectories):
-            target_distance = self.calculate_distance_to_target(pred_traj.cpu(), target_point)
-            # 计算当前轨迹的角度偏离度
-            angle_deviation_cost = self.calculate_angle_deviation(pred_traj.cpu(), pred_traj[0].cpu(), target_point)
-            collision = self.calculate_collisions_with_agents()[i]
-
-            # Calculate speed cost for the current trajectory
-            speed_cost = self.calculate_speed_cost([average_speeds[i]], self.speed_range)[0]
-
-            # Calculate dynamics for the trajectory
-            long_velocities, lat_velocities, long_accelerations, lat_accelerations, long_jerks, lat_jerks = self.calculate_dynamics(pred_traj.cpu())
-
-            # Calculate comfort costs
-            lat_comfort = self.lat_comfort_cost(long_velocities, lat_velocities, long_accelerations, lat_jerks)
-            lon_comfort = self.lon_comfort_cost(long_jerks)
-
-            # Calculate centripetal acceleration cost for the current trajectory
-            speeds = self.calculate_speeds(np.expand_dims(pred_traj.cpu(), axis=0))[0]
-            centripetal_acceleration_cost = self.calculate_centripetal_acceleration_cost(pred_traj.cpu(), speeds)
-
-            # Calculate total score
-            total_score = ( weights['target_distance'] * target_distance +
-                            weights['collision'] * collision +
-                            weights['speed'] * speed_cost + 
-                            weights['lat_comfort'] * lat_comfort + 
-                            weights['lon_comfort'] * lon_comfort + 
-                            weights['centripetal_acceleration'] * centripetal_acceleration_cost +
-                            weights['angle_deviation'] * angle_deviation_cost
-                           )
-            
-            scores.append(total_score)
-
-        # Update the historical average speed
-        self.speed_history.append(np.mean(average_speeds))
-        # 在得分计算结束后，找到成本最小的轨迹并更新队列
-        min_score_idx = np.argmin(scores[len(self.best_trajectory_queue):])  # 忽略队列中的轨迹
-        self.best_trajectory_queue.append(pred_trajectories[min_score_idx])
-
-        return scores
 
 
     

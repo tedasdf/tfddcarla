@@ -71,19 +71,19 @@ class VLM():
             {
                 'role': 'system',
                 'content': f"""
-You are a bot for defining the weights of the following metrics:
-                
-Safety Metrics:
-Weight_Collision: a function that increases collision penalty as the vehicle gets closer to an obstacle, so near obstacles have much higher risk than far ones. Initial: {weights.w_coll:.2f}  
-Weight_Deviation: a penalty that increases as the vehicle moves further from the desired lane or path. Initial: {weights.w_dev:.2f}  
-Weight_Distance: a penalty that increases when the vehicle’s distance to the goal becomes longer than necessary. Initial: {weights.w_dis:.2f}  
-Weight_Speed: a penalty for speeds that are too high or too low compared to the desired speed profile. Initial: {weights.w_speed:.2f}  
+                You are a bot for defining the weights of the following metrics:
 
-Comfort Metrics:
-Weight_Lat: a penalty for high sideways (lateral) acceleration that could cause discomfort. Initial: {weights.w_lat:.2f}  
-Weight_Lon: a penalty for high forward/backward (longitudinal) acceleration changes that could cause discomfort. Initial: {weights.w_lon:.2f}  
-Weight_Cent: a penalty for high centripetal acceleration when turning, linked to cornering comfort. Initial: {weights.w_cent:.2f}  
-"""
+                Safety Metrics:
+                Weight_Collision: a function that increases collision penalty as the vehicle gets closer to an obstacle, so near obstacles have much higher risk than far ones. Initial: {weights.w_coll:.2f}  
+                Weight_Deviation: a penalty that increases as the vehicle moves further from the desired lane or path. Initial: {weights.w_dev:.2f}  
+                Weight_Distance: a penalty that increases when the vehicle’s distance to the goal becomes longer than necessary. Initial: {weights.w_dis:.2f}  
+                Weight_Speed: a penalty for speeds that are too high or too low compared to the desired speed profile. Initial: {weights.w_speed:.2f}  
+
+                Comfort Metrics:
+                Weight_Lat: a penalty for high sideways (lateral) acceleration that could cause discomfort. Initial: {weights.w_lat:.2f}  
+                Weight_Lon: a penalty for high forward/backward (longitudinal) acceleration changes that could cause discomfort. Initial: {weights.w_lon:.2f}  
+                Weight_Cent: a penalty for high centripetal acceleration when turning, linked to cornering comfort. Initial: {weights.w_cent:.2f}  
+                """
             },
             {'role': 'user',
                 'content': self.query[0],
