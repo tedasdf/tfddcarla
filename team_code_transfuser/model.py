@@ -33,6 +33,8 @@ from mmdet.models.utils.gaussian_target import (get_local_maximum, get_topk_from
 from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
 from mmdet.models.dense_heads.dense_test_mixins import BBoxTestMixin
 
+PLAN_ANCHOR_PATH = '/data/ITS_2025/tfddcarla/kmeans_navsim_traj_20.npy'
+
 # custom imports
 import path_visualiser
 
@@ -666,7 +668,7 @@ class LidarCenterNet(nn.Module):
                 num_poses=8,
                 d_ffn=1024,
                 d_model=256,
-                plan_anchor_path="/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy",
+                plan_anchor_path=PLAN_ANCHOR_PATH,
                 config=config.path_config,
             )
 

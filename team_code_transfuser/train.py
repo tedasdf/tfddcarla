@@ -70,7 +70,7 @@ def main():
     parser.add_argument('--zero_redundancy_optimizer', type=int, default=0, help='0: Normal AdamW Optimizer, 1: Use Zero Reduncdancy Optimizer to reduce memory footprint. Only use with --parallel_training 1')
     parser.add_argument('--use_disk_cache', type=int, default=0, help='0: Do not cache the dataset 1: Cache the dataset on the disk pointed to by the SCRATCH enironment variable. Useful if the dataset is stored on slow HDDs and can be temporarily stored on faster SSD storage.')
 
-    print("args get")
+
     args = parser.parse_args()
     args.logdir = os.path.join(args.logdir, args.id)
     parallel = bool(args.parallel_training)
@@ -91,7 +91,6 @@ def main():
     else:
         shared_dict = None
 
-    print("torchrun")
     # Use torchrun for starting because it has proper error handling. Local rank will be set automatically
     if(parallel == True): #Non distributed works better with my local debugger
         rank       = int(os.environ["RANK"]) #Rank accross all processes
@@ -126,7 +125,6 @@ def main():
         index_bev = config.detailed_losses.index("loss_bev")
         config.detailed_losses_weights[index_bev] = 0.0
 
-    print("Create model")
     # Create model and optimizers
     model = LidarCenterNet(config, device, args.backbone, backbone_path='diffusiondrive', image_architecture=args.image_architecture, lidar_architecture=args.lidar_architecture, use_velocity=bool(args.use_velocity))
     
@@ -144,7 +142,7 @@ def main():
     else:
         optimizer = optim.AdamW(model.parameters(), lr=args.lr) # For single GPU training
 
-    print("Data")
+
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print ('Total trainable parameters: ', params)
@@ -202,16 +200,16 @@ def main():
                 g['lr'] = new_lr
         trainer.train()
 
-        # if((args.setting != 'all') and (epoch % args.val_every == 0)):
-        #     trainer.validate()
+        if((args.setting != 'all') and (epoch % args.val_every == 0)):
+            trainer.validate()
 
-        # if (parallel == True):
-        #     if (bool(args.zero_redundancy_optimizer) == True):
-        #         optimizer.consolidate_state_dict(0) # To save the whole optimizer we need to gather it on GPU 0.
-        #     if (rank == 0):
-        #         trainer.save()
-        # else:
-        #     trainer.save()
+        if (parallel == True):
+            if (bool(args.zero_redundancy_optimizer) == True):
+                optimizer.consolidate_state_dict(0) # To save the whole optimizer we need to gather it on GPU 0.
+            if (rank == 0):
+                trainer.save()
+        else:
+            trainer.save()
 
 class Engine(object):
     """
@@ -273,16 +271,43 @@ class Engine(object):
 
         ego_vel = data['speed'].to(self.device, dtype=torch.float32)
 
+    
+        collected_waypoint = data['collected_waypoint'].to(self.device,dtype=torch.float32)
+
+        print(collected_waypoint)    
         if ((self.args.backbone == 'transFuser') or (self.args.backbone == 'late_fusion') or (self.args.backbone == 'latentTF')):
-            # losses = self.model(rgb, lidar, ego_waypoint=ego_waypoint, target_point=target_point,
-            #                target_point_image=target_point_image,
-            #                ego_vel=ego_vel.reshape(-1, 1), bev=bev,
-            #                label=label, save_path=self.vis_save_path,
-            #                depth=depth, semantic=semantic, num_points=num_points)
-            losses = self.model(rgb, lidar, target_point=target_point,
+            if False:
+                # losses = self.model.forward_ego(rgb, lidar, target_point=target_point,
+                #             target_point_image=target_point_image,
+                #             ego_vel=ego_vel.reshape(-1, 1), bev=bev,
+                #             label=label, save_path=self.vis_save_path,
+                #             depth=depth, semantic=semantic, num_points=num_points)
+                losses = self.model.forward_ego(rgb, lidar, target_point=target_point,
                            target_point_image=target_point_image,
                            ego_vel=ego_vel.reshape(-1, 1), ego_acc=data['acceleration'], theta = data['theta'], save_path=self.vis_save_path, num_points=num_points)
-    
+            else:
+                print("EGO WAYPOINT")
+                print(ego_waypoint)
+
+                print(ego_waypoint.shape)
+
+
+                print("Collected_waypoint")
+                print(collected_waypoint.shape)
+            
+                losses = self.model( 
+                    rgb=rgb, 
+                    lidar_bev=lidar, 
+                    ego_waypoint=collected_waypoint, 
+                    target_point=target_point, 
+                    ego_vel=ego_vel.reshape(-1, 1), 
+                    ego_acc=data['acceleration'], 
+                    theta = data['theta'], 
+                    target_point_image=target_point_image, 
+                    bev=bev, label=label, 
+                    depth=depth, 
+                    semantic=semantic, 
+                    num_points=num_points)
         elif (self.args.backbone == 'geometric_fusion'):
 
             bev_points = data['bev_points'].long().to('cuda', dtype=torch.int64)
@@ -318,7 +343,7 @@ class Engine(object):
                 loss += self.detailed_weights[key] * value
                 detailed_losses_epoch[key] += float(self.detailed_weights[key] * value.item())
             loss.backward()
-            print("asdfasdfa")
+    
 
     
             self.optimizer.step()
@@ -327,7 +352,7 @@ class Engine(object):
            
 
         self.log_losses(loss_epoch, detailed_losses_epoch, num_batches, '')
-        print("ASDFASDFASDFASDFASDFASDF")
+
 
 
     @torch.inference_mode() # Faster version of torch_no_grad
@@ -407,7 +432,7 @@ def seed_worker(worker_id):
 if __name__ == "__main__":
     # The default method fork can run into deadlocks.
     # To use the dataloader with multiple workers forkserver or spawn should be used.
-    mp.set_start_method('forkserver')
+    mp.set_start_method('spawn')
     import sys
 
     # Redirect all output (print, errors, etc.) to a log file
