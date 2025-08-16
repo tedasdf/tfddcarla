@@ -25,7 +25,6 @@ from diskcache import Cache
 # Records error and tracebacks in case of failure
 @record
 def main():
-    print("type shit")
     torch.cuda.empty_cache()
 
     parser = argparse.ArgumentParser()
@@ -274,7 +273,7 @@ class Engine(object):
     
         collected_waypoint = data['collected_waypoint'].to(self.device,dtype=torch.float32)
 
-        print(collected_waypoint)    
+        # print(collected_waypoint)    
         if ((self.args.backbone == 'transFuser') or (self.args.backbone == 'late_fusion') or (self.args.backbone == 'latentTF')):
             if False:
                 # losses = self.model.forward_ego(rgb, lidar, target_point=target_point,
@@ -287,13 +286,13 @@ class Engine(object):
                            ego_vel=ego_vel.reshape(-1, 1), ego_acc=data['acceleration'], theta = data['theta'], save_path=self.vis_save_path, num_points=num_points)
             else:
                 print("EGO WAYPOINT")
-                print(ego_waypoint)
+                # print(ego_waypoint)
 
-                print(ego_waypoint.shape)
+                # print(ego_waypoint.shape)
 
 
                 print("Collected_waypoint")
-                print(collected_waypoint.shape)
+                # print(collected_waypoint.shape)
             
                 losses = self.model( 
                     rgb=rgb, 
@@ -432,7 +431,7 @@ def seed_worker(worker_id):
 if __name__ == "__main__":
     # The default method fork can run into deadlocks.
     # To use the dataloader with multiple workers forkserver or spawn should be used.
-    mp.set_start_method('spawn')
+    mp.set_start_method('fork')
     import sys
 
     # Redirect all output (print, errors, etc.) to a log file
@@ -442,4 +441,3 @@ if __name__ == "__main__":
 
     print("Start method of multiprocessing:", mp.get_start_method())
     main()
-    print("fINHASDFINASDFADFNADWIFNOANOFN")
