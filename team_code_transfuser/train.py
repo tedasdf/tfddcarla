@@ -27,6 +27,7 @@ from diskcache import Cache
 def main():
     print("type shit")
     torch.cuda.empty_cache()
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--id', type=str, default='transfuser', help='Unique experiment identifier.')
     parser.add_argument('--epochs', type=int, default=41, help='Number of train epochs.')

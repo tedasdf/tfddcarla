@@ -564,7 +564,7 @@ class LidarCenterNet(nn.Module):
     def __init__(self, config ,device, backbone, backbone_path, image_architecture='resnet34', lidar_architecture='resnet18', use_velocity=True):
         super().__init__()
         self._bev_downscale = nn.Conv2d(512, 256, kernel_size=1)
-        self._status_encoding = nn.Linear(4 + 2 + 2, 256)
+        self._status_encoding = nn.Linear(2 + 2 + 2, 256)
         self.device = device
         self.config = config
         self.pred_len = config.pred_len
@@ -666,7 +666,7 @@ class LidarCenterNet(nn.Module):
                 num_poses=8,
                 d_ffn=1024,
                 d_model=256,
-                plan_anchor_path="/home/slo/bt60_scratch/ted-backyard/tfddcarla/kmeans_navsim_traj_20.npy",
+                plan_anchor_path="/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy",
                 config=config.path_config,
             )
 
@@ -977,13 +977,10 @@ class LidarCenterNet(nn.Module):
 
         elif self.backbone_path == "diffusiondrive":
             features = transfuser_feature[1]
-            x_threshhold = 1  # what unit is this? TODO: CALCULATE A BETTER THRESHHOLD
+          
+        
+            driving_command = target_point.T
 
-           
-            print(target_point.shape)
-            print(target_point)
-            raise ValueError
-         
             x = ego_acc[0]  # shape [10]
             y = ego_acc[1]  # shape [10]
             acc_xy = torch.stack([x, y], dim=0)  # shape: [2, 10]
