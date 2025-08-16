@@ -1,0 +1,2 @@
+run CARLA: SDL_VIDEODRIVER=offscreen SDL_AUDIODRIVER=dummy SDL_HINT_CUDA_DEVICE=0 ./CarlaUE4.sh --world-port=2000 -opengl
+run training bash script: SDL_AUDIODRIVER=dummy ./leaderboard/scripts/datagen.sh 
