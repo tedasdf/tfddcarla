@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 
 results/
+results_test/
 model_ckpt/
 data/
 

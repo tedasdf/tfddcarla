@@ -43,6 +43,7 @@ class CARLA_Data(Dataset):
         self.labels = []
         self.measurements = []
 
+
         for sub_root in tqdm(root, file=sys.stdout):
             sub_root = Path(sub_root)
 
@@ -63,6 +64,7 @@ class CARLA_Data(Dataset):
                     lidar = []
                     label = []
                     measurement= []
+                    sequence_folders = []
                     # Loads the current (and past) frames (if seq_len > 1)
                     for idx in range(self.seq_len):
                         image.append(route_dir / "rgb" / ("%04d.png" % (seq + idx)))
@@ -71,7 +73,7 @@ class CARLA_Data(Dataset):
                         semantic.append(route_dir / "semantics" / ("%04d.png" % (seq + idx)))
                         lidar.append(route_dir / "lidar" / ("%04d.npy" % (seq + idx)))
                         measurement.append(route_dir / "measurements" / ("%04d.json"%(seq+idx)))
-
+                    
                     # Additionally load future labels of the waypoints
                     for idx in range(self.seq_len + self.pred_len):
                         label.append(route_dir / "label_raw" / ("%04d.json" % (seq + idx)))
@@ -83,7 +85,7 @@ class CARLA_Data(Dataset):
                     self.lidars.append(lidar)
                     self.labels.append(label)
                     self.measurements.append(measurement)
-
+                    
         # There is a complex "memory leak"/performance issue when using Python objects like lists in a Dataloader that is loaded with multiprocessing, num_workers > 0
         # A summary of that ongoing discussion can be found here https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
         # A workaround is to store the string lists as numpy byte objects because they only have 1 refcount.
@@ -106,7 +108,7 @@ class CARLA_Data(Dataset):
 
         data = dict()
         backbone = str(self.backbone, encoding='utf-8')
-
+        
         images = self.images[index]
         bevs = self.bevs[index]
         depths = self.depths[index]
@@ -114,7 +116,7 @@ class CARLA_Data(Dataset):
         lidars = self.lidars[index]
         labels = self.labels[index]
         measurements = self.measurements[index]
-
+     
         # load measurements
         loaded_images = []
         loaded_bevs = []
@@ -297,7 +299,13 @@ class CARLA_Data(Dataset):
         
         # padding
         label_pad = np.zeros((20, 7), dtype=np.float32)
+        # print("WHAT is this shit")
+        # print(waypoint[-1])
+        # print("========================")
+        # print(waypoint)
         ego_waypoint = waypoints[-1]
+        # print("The dataset ego waypoint from folder")
+        # print(ego_waypoint)
 
         # for the augmentation we only need to transform the waypoints for ego car
         degree_matrix = np.array([[np.cos(rad), np.sin(rad)],
@@ -334,6 +342,30 @@ class CARLA_Data(Dataset):
         data['x_command'] = measurements[self.seq_len-1]['x_command']
         data['y_command'] = measurements[self.seq_len-1]['y_command']
         data['acceleration'] = measurements[self.seq_len-1]['acceleration']
+        
+        data_waypoint = []
+
+        # Convert ego_matrix to numpy array once (outside the loop for efficiency)
+        ego_matrix = np.array(measurements[self.seq_len-1]['ego_matrix'])
+
+        # Compute inverse for global-to-local transformation
+        ego_matrix_inv = np.linalg.inv(ego_matrix)
+        
+        for i in measurements[self.seq_len-1]['waypoints']:
+            waypoint = np.array(i)  # Convert list to numpy array
+           
+            waypoint_hom = np.append(waypoint, 1)  # Homogeneous: [x, y, z, 1]
+            
+            # Global-to-local transformation
+            transformed_hom = ego_matrix_inv @ waypoint_hom
+            transformed_wp = transformed_hom[:3]  # Extract [x, y, z]
+            
+            data_waypoint.append(transformed_wp)
+
+            
+        data['collected_waypoint'] = np.array(data_waypoint)    
+
+        # data['waypoint']
 
         # target points
         # convert x_command, y_command to local coordinates
@@ -354,6 +386,7 @@ class CARLA_Data(Dataset):
         data['target_point'] = local_command_point
         
         data['target_point_image'] = draw_target_point(local_command_point)
+
         return data
 
 def get_depth(data):

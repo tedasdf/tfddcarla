@@ -506,10 +506,7 @@ class CustomTransformerDecoderLayer(nn.Module):
                 time_embed, 
                 status_encoding,
                 global_img=None):
-        print(traj_feature.shape)
-        print(noisy_traj_points.shape)
-        print(bev_feature.shape)
-        print(bev_spatial_shape)
+       
         traj_feature = self.cross_bev_attention(traj_feature,noisy_traj_points,bev_feature,bev_spatial_shape)
         traj_feature = traj_feature + self.dropout(self.cross_agent_attention(traj_feature, agents_query,agents_query)[0])
         traj_feature = self.norm1(traj_feature)
@@ -643,14 +640,14 @@ class TrajectoryHead(nn.Module):
         return torch.cat([odo_info_fut_x, odo_info_fut_y, odo_info_fut_head], dim=-1)
     def forward(self, ego_query, agents_query, bev_feature,bev_spatial_shape,status_encoding, targets=None,global_img=None) -> Dict[str, torch.Tensor]:
         """Torch module forward pass."""
-        if not self.training:
+        if self.training:
             return self.forward_train(ego_query, agents_query, bev_feature,bev_spatial_shape,status_encoding,targets,global_img)
         else:
             return self.forward_test(ego_query, agents_query, bev_feature,bev_spatial_shape,status_encoding,global_img)
 
 
     def forward_train(self, ego_query,agents_query,bev_feature,bev_spatial_shape,status_encoding, targets=None,global_img=None) -> Dict[str, torch.Tensor]:
-        print("ASDFASDFA")
+        
         bs = ego_query.shape[0]
         device = ego_query.device
         # 1. add truncated noise to the plan anchor
@@ -683,7 +680,7 @@ class TrajectoryHead(nn.Module):
         # 4. begin the stacked decoder
 
         poses_reg_list, poses_cls_list = self.diff_decoder(traj_feature, noisy_traj_points, bev_feature, bev_spatial_shape, agents_query, ego_query, time_embed, status_encoding,global_img)
-
+        
         trajectory_loss_dict = {}
         ret_traj_loss = 0
         for idx, (poses_reg, poses_cls) in enumerate(zip(poses_reg_list, poses_cls_list)):

@@ -666,7 +666,7 @@ class LidarCenterNet(nn.Module):
                 num_poses=8,
                 d_ffn=1024,
                 d_model=256,
-                plan_anchor_path="/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy",
+                plan_anchor_path="/home/slo/bt60_scratch/ted-backyard/tfddcarla/kmeans_navsim_traj_20.npy",
                 config=config.path_config,
             )
 
@@ -756,7 +756,7 @@ class LidarCenterNet(nn.Module):
 
         return steer, throttle, brake
 
-    def forward(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
+    def forward_ego(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
                     stuck_detector=0, forced_move=False, num_points=None, rgb_back=None, debug=False):
 
         if (self.use_point_pillars == True):
@@ -804,9 +804,9 @@ class LidarCenterNet(nn.Module):
             # need status_feature
             #
            
-            driving_command = torch.tensor([0, 1, 0, 0], dtype=torch.float32, device='cuda')  # shape [4]
-            driving_command = driving_command.unsqueeze(1).repeat(1, 10)  # shape [4, 10]
-
+            print(target_point.shape)
+            print(target_point)
+            raise ValueError
             # if target_point[0] >= x_threshhold:
             #     driving_command = [0, 0, 1, 0]
             # elif target_point[0] <= -x_threshhold:
@@ -942,9 +942,9 @@ class LidarCenterNet(nn.Module):
 
         return pred_wp, rotated_bboxes
 
-    def forward_old(self, rgb, lidar_bev, ego_waypoint, target_point, target_point_image,
-                ego_vel, bev, label, depth, semantic, num_points=None, save_path=None,
+    def forward(self, rgb, lidar_bev, ego_waypoint, target_point, ego_vel , ego_acc, theta ,target_point_image, bev, label, depth, semantic, num_points=None, save_path=None,
                 bev_points=None, cam_points=None):
+        print("here)")
         loss = {}
 
         if (self.use_point_pillars == True):
@@ -956,7 +956,7 @@ class LidarCenterNet(nn.Module):
             lidar_bev = torch.cat((lidar_bev, target_point_image), dim=1)
 
         if (self.backbone == 'transFuser'):
-            features, image_features_grid, fused_features = self._model(
+            transfuser_feature, image_features_grid, fused_features = self._model(
                 rgb, lidar_bev, ego_vel)
         elif (self.backbone == 'late_fusion'):
             features, image_features_grid, fused_features = self._model(
@@ -971,31 +971,71 @@ class LidarCenterNet(nn.Module):
             raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
 
         if  self.backbone_path == 'mlp':
-
             pred_wp, _, _, _, _ = self.forward_gru(
                 fused_features, target_point)
             loss_wp = torch.mean(torch.abs(pred_wp - ego_waypoint))
 
         elif self.backbone_path == "diffusiondrive":
-            # print(None)
-            # TODO: Implement the diffusion drive path prediction here
+            features = transfuser_feature[1]
+            x_threshhold = 1  # what unit is this? TODO: CALCULATE A BETTER THRESHHOLD
 
-            # need target
-            # need status_feature
-            #
+           
+            print(target_point.shape)
+            print(target_point)
+            raise ValueError
+         
+            x = ego_acc[0]  # shape [10]
+            y = ego_acc[1]  # shape [10]
+            acc_xy = torch.stack([x, y], dim=0)  # shape: [2, 10]
+            acc_xy = acc_xy.to('cuda')
+
+            # Flatten velocity and angle
+            device = ego_vel.device  # assuming vel is already on CUDA
+
+            theta = theta.to(device)
+
+            vel = ego_vel.view(-1)      # shape: [10]
+            theta = theta.view(-1)      # shape: [10]
+
+            # Compute velocity components
+            vx = vel * torch.cos(theta)
+            vy = vel * torch.sin(theta)
+            velocity_xy = torch.stack([vx, vy], dim=0)  # shape: [2, 10]
+     
+            # Combine into a single status_feature
+            status_feature = torch.cat(
+                [
+                    driving_command,
+                    velocity_xy.to(torch.float32),
+                    acc_xy.to(torch.float32),
+                ],
+                dim=0  # concatenate along rows, resulting in shape [4, 10]
+            ).T
 
             batch_size = status_feature.shape[0]
             cross_bev_feature = features
-            bev_spatial_shape = features
+            bev_spatial_shape = features.shape[2:]
             concat_cross_bev_shape = fused_features.shape[2:]
+
+            
+            # fused_features = fused_features.unsqueeze(0)  # [1, 10, 512]
+            # fused_features = fused_features.unsqueeze(2)  # [1, 10, 1, 512]
+
+
             bev_feature = self._bev_downscale(fused_features).flatten(-2, -1)
-            bev_feature = fused_features.permute(0, 2, 1)
+            
+            bev_feature = bev_feature.permute(0, 2, 1)
+
             status_encoding = self._status_encoding(status_feature)
+            
+      
 
-            keyval = torch.concatenate(
+            keyval = torch.cat(
                 [bev_feature, status_encoding[:, None]], dim=1)
+        
             keyval += self._keyval_embedding.weight[None, ...]
-
+            # print(keyval.shape)
+            # print(concat_cross_bev_shape)
             concat_cross_bev = keyval[:, :-1].permute(0, 2, 1).contiguous().view(
                 batch_size, -1, concat_cross_bev_shape[0], concat_cross_bev_shape[1])
             # upsample to the same shape as bev_feature_upscale
@@ -1012,23 +1052,31 @@ class LidarCenterNet(nn.Module):
                 batch_size, -1, bev_spatial_shape[0], bev_spatial_shape[1])
             query = self._query_embedding.weight[None, ...].repeat(
                 batch_size, 1, 1)
+            # print(query.shape)
             query_out = self._tf_decoder(query, keyval)
 
             trajectory_query, agents_query = query_out.split(
                 self._query_splits, dim=1)
 
-            loss_wp = self.path_out(
+            print("trajectory Query")
+            print(trajectory_query.shape)
+            
+            
+            loss_dict = self.path_out(
                 trajectory_query,
                 agents_query,
-                bev_feature,
+                cross_bev_feature,
                 bev_spatial_shape,
                 status_encoding[:, None],
-                targets,
+                ego_waypoint,
                 None
-            )  # {"trajectory": best_reg,"trajectory_loss":ret_traj_loss,"trajectory_loss_dict":trajectory_loss_dict}
-
+            )  # {"trajectory": poses_reg}
+ 
+            
+            print(loss_dict.keys()) # pred output
+            loss_wp = loss_dict['trajectory_loss']
         # pred topdown view
-        pred_bev = self.pred_bev(features[0])
+        pred_bev = self.pred_bev(transfuser_feature[0])
         pred_bev = F.interpolate(pred_bev, (self.config.bev_resolution_height,
                                  self.config.bev_resolution_width), mode='bilinear', align_corners=True)
 
@@ -1041,7 +1089,7 @@ class LidarCenterNet(nn.Module):
             "loss_bev": loss_bev
         })
 
-        preds = self.head([features[0]])
+        preds = self.head([transfuser_feature[0]])
 
         gt_labels = torch.zeros_like(label[:, :, 0])
         gt_bboxes_ignore = label.sum(dim=-1) == 0.

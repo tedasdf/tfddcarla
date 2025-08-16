@@ -25,8 +25,8 @@ from diskcache import Cache
 # Records error and tracebacks in case of failure
 @record
 def main():
+    print("type shit")
     torch.cuda.empty_cache()
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--id', type=str, default='transfuser', help='Unique experiment identifier.')
     parser.add_argument('--epochs', type=int, default=41, help='Number of train epochs.')
@@ -69,7 +69,7 @@ def main():
     parser.add_argument('--zero_redundancy_optimizer', type=int, default=0, help='0: Normal AdamW Optimizer, 1: Use Zero Reduncdancy Optimizer to reduce memory footprint. Only use with --parallel_training 1')
     parser.add_argument('--use_disk_cache', type=int, default=0, help='0: Do not cache the dataset 1: Cache the dataset on the disk pointed to by the SCRATCH enironment variable. Useful if the dataset is stored on slow HDDs and can be temporarily stored on faster SSD storage.')
 
-
+    print("args get")
     args = parser.parse_args()
     args.logdir = os.path.join(args.logdir, args.id)
     parallel = bool(args.parallel_training)
@@ -90,6 +90,7 @@ def main():
     else:
         shared_dict = None
 
+    print("torchrun")
     # Use torchrun for starting because it has proper error handling. Local rank will be set automatically
     if(parallel == True): #Non distributed works better with my local debugger
         rank       = int(os.environ["RANK"]) #Rank accross all processes
@@ -124,6 +125,7 @@ def main():
         index_bev = config.detailed_losses.index("loss_bev")
         config.detailed_losses_weights[index_bev] = 0.0
 
+    print("Create model")
     # Create model and optimizers
     model = LidarCenterNet(config, device, args.backbone, backbone_path='diffusiondrive', image_architecture=args.image_architecture, lidar_architecture=args.lidar_architecture, use_velocity=bool(args.use_velocity))
     
@@ -141,7 +143,7 @@ def main():
     else:
         optimizer = optim.AdamW(model.parameters(), lr=args.lr) # For single GPU training
 
-
+    print("Data")
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print ('Total trainable parameters: ', params)
@@ -404,7 +406,7 @@ def seed_worker(worker_id):
 if __name__ == "__main__":
     # The default method fork can run into deadlocks.
     # To use the dataloader with multiple workers forkserver or spawn should be used.
-    mp.set_start_method('fork')
+    mp.set_start_method('forkserver')
     import sys
 
     # Redirect all output (print, errors, etc.) to a log file
