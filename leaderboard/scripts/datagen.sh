@@ -2,7 +2,7 @@
 
 WORK_DIR=${1:-/home/fypits25/Documents/tfddcarla}
 CARLA_ROOT=${2:-/home/fypits25/Documents/tfddcarla/carla}
-TOTAL_REPS=${3:-2}  # how many times to loop through all scenarios
+TOTAL_REPS=${3:-3}  # how many times to loop through all scenarios
 
 CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh
 export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI
@@ -18,7 +18,7 @@ export LB_REPETITIONS=1
 export CHALLENGE_TRACK_CODENAME=MAP
 export TEAM_AGENT=${WORK_DIR}/team_code_autopilot/data_agent.py
 export DEBUG_CHALLENGE=0
-export RESUME=0
+export RESUME=1
 export DATAGEN=1
  
 # Outer loop for repetitions
