@@ -32,6 +32,7 @@ from mmdet.gaussian_target import (get_local_maximum, get_topk_from_heatmap,
                                                 transpose_and_gather_feat)
 from mmdet.base_dense_head import BaseDenseHead
 from mmdet.dense_test_mixins import BBoxTestMixin
+from mmdet.gaussian_focal_loss import GaussianFocalLoss
 
 # custom imports
 import path_visualiser
