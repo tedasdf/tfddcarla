@@ -161,8 +161,7 @@ cython_debug/
 
 results/*
 result_json/*
-result_test/*
-result_test/
+results_test/*
 model_ckpt/
 data/
 

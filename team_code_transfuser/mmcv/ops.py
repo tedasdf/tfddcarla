@@ -1,18 +1,10 @@
 import numpy as np
+import torch.nn as nn
+import torch
+from torch import Tensor
+from typing import Any, Dict, List, Optional, Tuple, Union, Iterable, Callable
 
-def bias_init_with_prob(prior_prob: float) -> float:
-    """initialize conv/fc bias value according to a given probability value."""
-    bias_init = float(-np.log((1 - prior_prob) / prior_prob))
-    return bias_init
-
-def normal_init(module: nn.Module,
-                mean: float = 0,
-                std: float = 1,
-                bias: float = 0) -> None:
-    if hasattr(module, 'weight') and module.weight is not None:
-        nn.init.normal_(module.weight, mean, std)
-    if hasattr(module, 'bias') and module.bias is not None:
-        nn.init.constant_(module.bias, bias)
+from mmcv.misc import deprecated_api_warning
 
 def batched_nms(boxes: Tensor,
                 scores: Tensor,
@@ -134,89 +126,63 @@ def batched_nms(boxes: Tensor,
     return boxes, keep
 
 
-    def force_fp32(apply_to: Optional[Iterable] = None,
-               out_fp16: bool = False) -> Callable:
-        """Decorator to convert input arguments to fp32 in force.
+array_like_type = Union[Tensor, np.ndarray]
 
-        This decorator is useful when you write custom modules and want to support
-        mixed precision training. If there are some inputs that must be processed
-        in fp32 mode, then this decorator can handle it. If inputs arguments are
-        fp16 tensors, they will be converted to fp32 automatically. Arguments other
-        than fp16 tensors are ignored. If you are using PyTorch >= 1.6,
-        torch.cuda.amp is used as the backend, otherwise, original mmcv
-        implementation will be adopted.
+@deprecated_api_warning({'iou_thr': 'iou_threshold'})
+def nms(boxes: array_like_type,
+        scores: array_like_type,
+        iou_threshold: float,
+        offset: int = 0,
+        score_threshold: float = 0,
+        max_num: int = -1) -> Tuple[array_like_type, array_like_type]:
+    """Dispatch to either CPU or GPU NMS implementations.
 
-        Args:
-            apply_to (Iterable, optional): The argument names to be converted.
-                `None` indicates all arguments.
-            out_fp16 (bool): Whether to convert the output back to fp16.
+    The input can be either torch tensor or numpy array. GPU NMS will be used
+    if the input is gpu tensor, otherwise CPU NMS
+    will be used. The returned type will always be the same as inputs.
 
-        Example:
+    Arguments:
+        boxes (torch.Tensor or np.ndarray): boxes in shape (N, 4).
+        scores (torch.Tensor or np.ndarray): scores in shape (N, ).
+        iou_threshold (float): IoU threshold for NMS.
+        offset (int, 0 or 1): boxes' width or height is (x2 - x1 + offset).
+        score_threshold (float): score threshold for NMS.
+        max_num (int): maximum number of boxes after NMS.
 
-            >>> import torch.nn as nn
-            >>> class MyModule1(nn.Module):
-            >>>
-            >>>     # Convert x and y to fp32
-            >>>     @force_fp32()
-            >>>     def loss(self, x, y):
-            >>>         pass
+    Returns:
+        tuple: kept dets (boxes and scores) and indice, which always have
+        the same data type as the input.
 
-            >>> import torch.nn as nn
-            >>> class MyModule2(nn.Module):
-            >>>
-            >>>     # convert pred to fp32
-            >>>     @force_fp32(apply_to=('pred', ))
-            >>>     def post_process(self, pred, others):
-            >>>         pass
-        """
+    Example:
+        >>> boxes = np.array([[49.1, 32.4, 51.0, 35.9],
+        >>>                   [49.3, 32.9, 51.0, 35.3],
+        >>>                   [49.2, 31.8, 51.0, 35.4],
+        >>>                   [35.1, 11.5, 39.1, 15.7],
+        >>>                   [35.6, 11.8, 39.3, 14.2],
+        >>>                   [35.3, 11.5, 39.9, 14.5],
+        >>>                   [35.2, 11.7, 39.7, 15.7]], dtype=np.float32)
+        >>> scores = np.array([0.9, 0.9, 0.5, 0.5, 0.5, 0.4, 0.3],\
+               dtype=np.float32)
+        >>> iou_threshold = 0.6
+        >>> dets, inds = nms(boxes, scores, iou_threshold)
+        >>> assert len(inds) == len(dets) == 3
+    """
+    assert isinstance(boxes, (Tensor, np.ndarray))
+    assert isinstance(scores, (Tensor, np.ndarray))
+    is_numpy = False
+    if isinstance(boxes, np.ndarray):
+        is_numpy = True
+        boxes = torch.from_numpy(boxes)
+    if isinstance(scores, np.ndarray):
+        scores = torch.from_numpy(scores)
+    assert boxes.size(1) == 4
+    assert boxes.size(0) == scores.size(0)
+    assert offset in (0, 1)
 
-        def force_fp32_wrapper(old_func):
-
-            @functools.wraps(old_func)
-            def new_func(*args, **kwargs):
-                # check if the module has set the attribute `fp16_enabled`, if not,
-                # just fallback to the original method.
-                if not isinstance(args[0], torch.nn.Module):
-                    raise TypeError('@force_fp32 can only be used to decorate the '
-                                    'method of nn.Module')
-                if not (hasattr(args[0], 'fp16_enabled') and args[0].fp16_enabled):
-                    return old_func(*args, **kwargs)
-                # get the arg spec of the decorated method
-                args_info = getfullargspec(old_func)
-                # get the argument names to be casted
-                args_to_cast = args_info.args if apply_to is None else apply_to
-                # convert the args that need to be processed
-                new_args = []
-                if args:
-                    arg_names = args_info.args[:len(args)]
-                    for i, arg_name in enumerate(arg_names):
-                        if arg_name in args_to_cast:
-                            new_args.append(
-                                cast_tensor_type(args[i], torch.half, torch.float))
-                        else:
-                            new_args.append(args[i])
-                # convert the kwargs that need to be processed
-                new_kwargs = dict()
-                if kwargs:
-                    for arg_name, arg_value in kwargs.items():
-                        if arg_name in args_to_cast:
-                            new_kwargs[arg_name] = cast_tensor_type(
-                                arg_value, torch.half, torch.float)
-                        else:
-                            new_kwargs[arg_name] = arg_value
-                # apply converted arguments to the decorated method
-                if (TORCH_VERSION != 'parrots' and
-                        digit_version(TORCH_VERSION) >= digit_version('1.6.0')):
-                    with autocast(enabled=False):
-                        output = old_func(*new_args, **new_kwargs)
-                else:
-                    output = old_func(*new_args, **new_kwargs)
-                # cast the results back to fp32 if necessary
-                if out_fp16:
-                    output = cast_tensor_type(output, torch.float, torch.half)
-                return output
-
-            return new_func
-
-        return force_fp32_wrapper
-
+    inds = NMSop.apply(boxes, scores, iou_threshold, offset, score_threshold,
+                       max_num)
+    dets = torch.cat((boxes[inds], scores[inds].reshape(-1, 1)), dim=1)
+    if is_numpy:
+        dets = dets.cpu().numpy()
+        inds = inds.cpu().numpy()
+    return dets, inds

@@ -21,19 +21,17 @@ from torchvision import models
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn as nn
-from model_utils import bias_init_with_prob, normal_init # from mmcv.cnn import bias_init_with_prob, normal_init
-from model_utils import batched_nms #from mmcv.ops import batched_nms
-from model_utils import force_fp32 #from mmcv.runner import force_fp32
+from mmcv.cnn import bias_init_with_prob, normal_init
+from mmcv.ops import batched_nms
+from mmcv.runner import force_fp32
 
 from mmdet.core import multi_apply
 from mmdet.models import HEADS, build_loss
-from mmdet.models.utils import gaussian_radius, gen_gaussian_target
-from mmdet.models.utils.gaussian_target import (get_local_maximum, get_topk_from_heatmap,
+from mmdet.utils import gaussian_radius, gen_gaussian_target
+from mmdet.gaussian_target import (get_local_maximum, get_topk_from_heatmap,
                                                 transpose_and_gather_feat)
-from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
-from mmdet.models.dense_heads.dense_test_mixins import BBoxTestMixin
-
-import vlm_integration
+from mmdet.base_dense_head import BaseDenseHead
+from mmdet.dense_test_mixins import BBoxTestMixin
 
 # custom imports
 import path_visualiser
@@ -99,15 +97,6 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
         self.test_cfg = test_cfg
         self.fp16_enabled = train_cfg.fp16_enabled
         self.i = 0
-
-        # self.weights = vlm_integration.Weights()
-        # self.weights.w_coll = 5.0
-        # self.weights.w_dev = 3.5
-        # self.weights.w_dis = 1.5
-        # self.weights.w_speed = 2.5
-        # self.weights.w_lat = 1.5
-        # self.weights.w_lon = 4.5
-        # self.weights.w_cent = 3.0
 
     def _build_head(self, in_channel, feat_channel, out_channel):
         """Build head for each branch."""
