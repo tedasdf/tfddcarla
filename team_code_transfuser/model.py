@@ -100,14 +100,14 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
         self.fp16_enabled = train_cfg.fp16_enabled
         self.i = 0
 
-        self.weights = vlm_integration.Weights()
-        self.weights.w_coll = 5.0
-        self.weights.w_dev = 3.5
-        self.weights.w_dis = 1.5
-        self.weights.w_speed = 2.5
-        self.weights.w_lat = 1.5
-        self.weights.w_lon = 4.5
-        self.weights.w_cent = 3.0
+        # self.weights = vlm_integration.Weights()
+        # self.weights.w_coll = 5.0
+        # self.weights.w_dev = 3.5
+        # self.weights.w_dis = 1.5
+        # self.weights.w_speed = 2.5
+        # self.weights.w_lat = 1.5
+        # self.weights.w_lon = 4.5
+        # self.weights.w_cent = 3.0
 
     def _build_head(self, in_channel, feat_channel, out_channel):
         """Build head for each branch."""
@@ -677,7 +677,7 @@ class LidarCenterNet(nn.Module):
                 num_poses=8,
                 d_ffn=1024,
                 d_model=256,
-                plan_anchor_path="/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy",
+                plan_anchor_path="/data/ITS_2025/tfddcarla/kmeans_navsim_traj_20.npy",
                 config=config.path_config,
             )
 
@@ -946,10 +946,10 @@ class LidarCenterNet(nn.Module):
                                 # gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
-        vlm = vlm_integration.VLM(model)
+        # vlm = vlm_integration.VLM(model)
         
-        response = vlm.step(rgb, self.weights)
-        self.weights.update_weights(response)
+        # response = vlm.step(rgb, self.weights)
+        # self.weights.update_weights(response)
 
 
 

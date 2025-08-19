@@ -336,7 +336,7 @@ class Engine(object):
             
             self.optimizer.zero_grad(set_to_none=True)
             losses = self.load_data_compute_loss(data)
-            loss = torch.tensor(0.0).to(self.device, dtype=torch.float32)
+            loss = torch.tensor(0.0).to(self.device)
 
             for key, value in losses.items():
                 loss += self.detailed_weights[key] * value

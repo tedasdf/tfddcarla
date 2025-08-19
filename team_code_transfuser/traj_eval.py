@@ -39,7 +39,12 @@ class TrajectoryScoring:
         print(f"Weight_Lon: {self.weights["w_lon"]}")
         print(f"Weight_Cent: {self.weights["w_cent"]}")
     
-    def compute_scores(self, pred_trajectories):
+    def compute_scores(self, pred_trajectories, target_point):
+        """
+        Compute predicted trajectories safety and comfort scores
+        input: pred_trajectories
+        output: scores from each pred_trajectories 
+        """
         weights = self.weights
 
         #target_point = self.sample['target_info'] 
@@ -63,7 +68,7 @@ class TrajectoryScoring:
         scores = []
         for i, pred_traj in enumerate(pred_trajectories):
             target_distance = self.calculate_distance_to_target(pred_traj.cpu(), target_point)
-            # 计算当前轨迹的角度偏离度
+            # Calculate the angle deviation of the current trajectory
             angle_deviation_cost = self.calculate_angle_deviation(pred_traj.cpu(), pred_traj[0].cpu(), target_point)
             collision = self.calculate_collisions_with_agents()[i]
 
@@ -82,20 +87,20 @@ class TrajectoryScoring:
             centripetal_acceleration_cost = self.calculate_centripetal_acceleration_cost(pred_traj.cpu(), speeds)
 
             # Calculate total score
-            total_score = ( weights['target_distance'] * target_distance +
-                            weights['collision'] * collision +
-                            weights['speed'] * speed_cost + 
-                            weights['lat_comfort'] * lat_comfort + 
-                            weights['lon_comfort'] * lon_comfort + 
-                            weights['centripetal_acceleration'] * centripetal_acceleration_cost +
-                            weights['angle_deviation'] * angle_deviation_cost
+            total_score = ( weights['w_dis'] * target_distance +
+                            weights['w_coll'] * collision +
+                            weights['w_speed'] * speed_cost + 
+                            weights['w_lat'] * lat_comfort + 
+                            weights['w_lon'] * lon_comfort + 
+                            weights['w_cent'] * centripetal_acceleration_cost +
+                            weights['w_dev'] * angle_deviation_cost
                            )
             
             scores.append(total_score)
 
         # Update the historical average speed
         self.speed_history.append(np.mean(average_speeds))
-        # 在得分计算结束后，找到成本最小的轨迹并更新队列
+        # After the score calculation is finished, find the trajectory with the lowest cost and update the queue.
         min_score_idx = np.argmin(scores[len(self.best_trajectory_queue):])  # 忽略队列中的轨迹
         self.best_trajectory_queue.append(pred_trajectories[min_score_idx])
 
@@ -251,13 +256,13 @@ class TrajectoryScoring:
         """
         centripetal_acc_sum = 0.0
         centripetal_acc_sqr_sum = 0.0
-        numerical_epsilon = 1e-6  # 避免除以零
+        numerical_epsilon = 1e-6  # Avoid division by zero
 
-        # 计算曲率
+        # Calculate curvature
         curvatures = [self.calculate_curvature(trajectory[i - 1], trajectory[i], trajectory[i + 1])
                       for i in range(1, len(trajectory) - 1)]
 
-        # 计算向心加速度和成本
+        # Calculate centripetal acceleration and cost
         for i, curvature in enumerate(curvatures):
             centripetal_acc = speeds[i] ** 2 * curvature
             centripetal_acc_sum += np.fabs(centripetal_acc)

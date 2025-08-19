@@ -1,0 +1,43 @@
+name: yide
+channels:
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=main
+  - _openmp_mutex=5.1=1_gnu
+  - ca-certificates=2025.7.15=h06a4308_0
+  - certifi=2022.12.7=py37h06a4308_0
+  - ld_impl_linux-64=2.40=h12ee557_0
+  - libffi=3.4.4=h6a678d5_1
+  - libgcc-ng=11.2.0=h1234567_1
+  - libgomp=11.2.0=h1234567_1
+  - libstdcxx-ng=11.2.0=h1234567_1
+  - libxcb=1.17.0=h9b100fa_0
+  - ncurses=6.5=h7934f7d_0
+  - openssl=1.1.1w=h7f8727e_0
+  - pthread-stubs=0.3=h0ce48e5_1
+  - python=3.7.16=h7a1cb2a_0
+  - readline=8.3=hc2a1206_0
+  - setuptools=65.6.3=py37h06a4308_0
+  - sqlite=3.50.2=hb25bd0a_1
+  - tk=8.6.15=h54e0aa7_0
+  - wheel=0.38.4=py37h06a4308_0
+  - xorg-libx11=1.8.12=h9b100fa_1
+  - xorg-libxau=1.0.12=h9b100fa_0
+  - xorg-libxdmcp=1.1.5=h9b100fa_0
+  - xorg-xorgproto=2024.1=h5eee18b_1
+  - xz=5.6.4=h5eee18b_1
+  - zlib=1.2.13=h5eee18b_1
+  - pip:
+      - charset-normalizer==3.4.3
+      - idna==3.10
+      - numpy==1.21.6
+      - pillow==9.5.0
+      - pip==24.0
+      - requests==2.31.0
+      - torch==1.13.1+cu116
+      - torchaudio==0.13.1+cu116
+      - torchvision==0.14.1+cu116
+      - tqdm==4.67.1
+      - typing-extensions==4.7.1
+      - urllib3==2.0.7
+prefix: /data/miniconda3/envs/yide

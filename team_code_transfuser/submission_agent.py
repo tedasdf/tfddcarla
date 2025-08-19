@@ -331,8 +331,10 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             pred_wps = diffusion(backbone_output)
             vlm_responses = self.vlm.step(image)
             self.trajscore.update_weights(vlm_responses)
-            best_wp = self.trajscore.compute_scores(pred_wp)
-            
+            scores: List = self.trajscore.compute_scores(pred_wp, target_point)
+            best_wp_idx = scores.index(max(scores))
+            best_wp = pred_wp[best_wp_idx]
+
 
         return best_wp
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 WORK_DIR=${1:-/data/ITS_2025/tfddcarla}
 CARLA_ROOT=${2:-/data/ITS_2025/tfddcarla/carla}
-TOTAL_REPS=${3:-2}  # how many times to loop through all scenarios
+TOTAL_REPS=${3:-1}  # how many times to loop through all scenarios
 echo "$WORK_DIR"
 CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh
 export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI
