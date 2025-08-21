@@ -1,0 +1,2 @@
+Start method of multiprocessing: spawn
+wandb: Tracking run with wandb version 0.8.29

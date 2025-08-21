@@ -1,0 +1,35 @@
+{
+    "root": "/home/fypits25/Documents/tfddcarla",
+    "program": "./team_code_transfuser/train.py",
+    "git": {
+        "remote": "https://github.com/tedasdf/tfddcarla.git",
+        "commit": "6dd16ff1c06f820dac8f9a8333c5206a53f4301f"
+    },
+    "email": "huy.s150103@gmail.com",
+    "codePath": "team_code_transfuser/train.py",
+    "startedAt": "2025-08-21T12:53:23.256291",
+    "host": "fypits25-MS-7E28",
+    "username": "fypits25",
+    "executable": "/home/fypits25/miniconda3/envs/tfuse/bin/python",
+    "os": "Linux-5.15.0-139-generic-x86_64-with-debian-bullseye-sid",
+    "python": "3.7.13",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_count": 1,
+    "cpu_count": 24,
+    "args": [
+        "--batch_size",
+        "10",
+        "--logdir",
+        "logdir",
+        "--root_dir",
+        "./results",
+        "--parallel_training"
+    ],
+    "state": "failed",
+    "jobType": null,
+    "mode": "run",
+    "name": "tfddcarla",
+    "project": "tfuse",
+    "heartbeatAt": "2025-08-21T12:53:24.607327",
+    "exitcode": 2
+}

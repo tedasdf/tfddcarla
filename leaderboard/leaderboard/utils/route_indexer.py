@@ -2,8 +2,40 @@ from collections import OrderedDict
 from dictor import dictor
 
 import copy
+import carla
+class ScenarioConfiguration(object):
 
-from srunner.scenarioconfigs.route_scenario_configuration import RouteScenarioConfiguration
+    """
+    This class provides a basic scenario configuration incl.:
+    - configurations for all actors
+    - town, where the scenario should be executed
+    - name of the scenario (e.g. ControlLoss_1)
+    - type is the class of scenario (e.g. ControlLoss)
+    """
+
+    trigger_points = []
+    ego_vehicles = []
+    other_actors = []
+    town = None
+    name = None
+    type = None
+    route = None
+    agent = None
+    weather = carla.WeatherParameters()
+    friction = None
+    subtype = None
+    route_var_name = None
+
+
+class RouteScenarioConfiguration(ScenarioConfiguration):
+
+    """
+    Basic configuration of a RouteScenario
+    """
+
+    trajectory = None
+    scenario_file = None
+
 
 
 from leaderboard.utils.route_parser import RouteParser
@@ -12,6 +44,7 @@ from leaderboard.utils.checkpoint_tools import fetch_dict, create_default_json_m
 
 class RouteIndexer():
     def __init__(self, routes_file, scenarios_file, repetitions):
+        print("transfuser Garage")
         self._routes_file = routes_file
         self._scenarios_file = scenarios_file
         self._repetitions = repetitions
@@ -33,18 +66,23 @@ class RouteIndexer():
                 self._configs_dict['{}.{}'.format(config.name, repetition)] = copy.copy(config)
 
         self._configs_list = list(self._configs_dict.items())
+        print("PRINTING JE CONFIG LIST")
         print(len(self._configs_list))
 
     def peek(self):
+        print("PEEK VALUE",not (self._index >= len(self._configs_list)))
+        print("INDEX LISt", self._index)
         return not (self._index >= len(self._configs_list))
 
     def next(self):
         if self._index >= len(self._configs_list):
+            print("WHY")
             return None
 
         key, config = self._configs_list[self._index]
         self._index += 1
-
+        print("CONFIG PATj POR QUE")
+        print(config)
         return config
 
     def resume(self, endpoint):
@@ -65,9 +103,13 @@ class RouteIndexer():
                           'larger than maximum number of routes {}'.format(current_route, self.total))
 
     def save_state(self, endpoint):
+        print("SAVING STATE")
+        print(self._index)
         data = fetch_dict(endpoint)
+        print(self._index)
         if not data:
             data = create_default_json_msg()
         data['_checkpoint']['progress'] = [self._index, self.total]
-
+        print(self._index)
         save_dict(endpoint, data)
+        print(self._index)

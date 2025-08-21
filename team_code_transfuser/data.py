@@ -10,8 +10,9 @@ import cv2
 import random
 from copy import deepcopy
 import io
+import json
 
-from utils import get_vehicle_to_virtual_lidar_transform, get_vehicle_to_lidar_transform, get_lidar_to_vehicle_transform, get_lidar_to_bevimage_transform
+from utils_file import get_vehicle_to_virtual_lidar_transform, get_vehicle_to_lidar_transform, get_lidar_to_vehicle_transform, get_lidar_to_bevimage_transform
 
 class CARLA_Data(Dataset):
 
@@ -42,50 +43,75 @@ class CARLA_Data(Dataset):
         self.lidars = []
         self.labels = []
         self.measurements = []
-
-
+        # print("THSIS IS ROOT")
+        # print(root)
         for sub_root in tqdm(root, file=sys.stdout):
-            sub_root = Path(sub_root)
+            sub_root_path = Path(sub_root)  # convert key/folder name to Path
+            json_file_path = []
+            for json_file in sub_root_path.glob("*.json"):
+                # json_file is a Path object, you can get the full path as a string
+                # print("JSON file path:", json_file.resolve())  # absolute path
+                # print("Or relative path:", json_file)   
+                json_file_path.append(json_file)
+            if len(json_file_path) != 1:
+                continue
 
-            # list sub-directories in root
-            root_files = os.listdir(sub_root)
-            routes = [folder for folder in root_files if not os.path.isfile(os.path.join(sub_root,folder))]
-            for route in routes:
-                route_dir = sub_root
-                num_seq = len(os.listdir(route_dir / "lidar"))
+            # print(root)
+            # print("THIS IS SUB")
+            # print(sub_root)
+            with open(json_file, "r") as f:
+                data = json.load(f)
+            yesorno = data['_checkpoint']['records']
+           
+            for record, sub_sub_root in zip(yesorno, root[sub_root]):
+                if record['status'] != "Completed":
+                    # print(record['status'])
+                    continue
+                # print(sub_sub_root)
+                sub_root = Path(sub_sub_root)
 
-                # ignore the first two and last two frame
-                for seq in range(2, num_seq - self.pred_len - self.seq_len - 2):
-                    # load input seq and pred seq jointly
-                    image = []
-                    bev = []
-                    depth = []
-                    semantic = []
-                    lidar = []
-                    label = []
-                    measurement= []
-                    sequence_folders = []
-                    # Loads the current (and past) frames (if seq_len > 1)
-                    for idx in range(self.seq_len):
-                        image.append(route_dir / "rgb" / ("%04d.png" % (seq + idx)))
-                        bev.append(route_dir / "topdown" / ("encoded_%04d.png" % (seq + idx)))
-                        depth.append(route_dir / "depth" / ("%04d.png" % (seq + idx)))
-                        semantic.append(route_dir / "semantics" / ("%04d.png" % (seq + idx)))
-                        lidar.append(route_dir / "lidar" / ("%04d.npy" % (seq + idx)))
-                        measurement.append(route_dir / "measurements" / ("%04d.json"%(seq+idx)))
+                # if not os.path.isdir(sub_root):
+                #     continue
+                # list sub-directories in root
+                root_files = os.listdir(sub_root)
+                routes = [folder for folder in root_files if not os.path.isfile(os.path.join(sub_root,folder))]
+                for route in routes:
+                    route_dir = sub_root
+                    num_seq = len(os.listdir(route_dir / "lidar"))
+
                     
-                    # Additionally load future labels of the waypoints
-                    for idx in range(self.seq_len + self.pred_len):
-                        label.append(route_dir / "label_raw" / ("%04d.json" % (seq + idx)))
+                    # ignore the first two and last two frame
+                    for seq in range(2, num_seq - self.pred_len - self.seq_len - 2):
+                        # load input seq and pred seq jointly
+                        image = []
+                        bev = []
+                        depth = []
+                        semantic = []
+                        lidar = []
+                        label = []
+                        measurement= []
+                        sequence_folders = []
+                        # Loads the current (and past) frames (if seq_len > 1)
+                        for idx in range(self.seq_len):
+                            image.append(route_dir / "rgb" / ("%04d.png" % (seq + idx)))
+                            bev.append(route_dir / "topdown" / ("encoded_%04d.png" % (seq + idx)))
+                            depth.append(route_dir / "depth" / ("%04d.png" % (seq + idx)))
+                            semantic.append(route_dir / "semantics" / ("%04d.png" % (seq + idx)))
+                            lidar.append(route_dir / "lidar" / ("%04d.npy" % (seq + idx)))
+                            measurement.append(route_dir / "measurements" / ("%04d.json"%(seq+idx)))
+                        
+                        # Additionally load future labels of the waypoints
+                        for idx in range(self.seq_len + self.pred_len):
+                            label.append(route_dir / "label_raw" / ("%04d.json" % (seq + idx)))
 
-                    self.images.append(image)
-                    self.bevs.append(bev)
-                    self.depths.append(depth)
-                    self.semantics.append(semantic)
-                    self.lidars.append(lidar)
-                    self.labels.append(label)
-                    self.measurements.append(measurement)
-                    
+                        self.images.append(image)
+                        self.bevs.append(bev)
+                        self.depths.append(depth)
+                        self.semantics.append(semantic)
+                        self.lidars.append(lidar)
+                        self.labels.append(label)
+                        self.measurements.append(measurement)
+                        
         # There is a complex "memory leak"/performance issue when using Python objects like lists in a Dataloader that is loaded with multiprocessing, num_workers > 0
         # A summary of that ongoing discussion can be found here https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
         # A workaround is to store the string lists as numpy byte objects because they only have 1 refcount.

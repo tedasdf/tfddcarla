@@ -524,8 +524,8 @@ class CustomTransformerDecoderLayer(nn.Module):
         
         # 4.9 predict the offset & heading
         poses_reg, poses_cls = self.task_decoder(traj_feature) #bs,20,8,3; bs,20
-        print(poses_reg.shape)
-        print(poses_cls.shape)
+        # print(poses_reg.shape)
+        # print(poses_cls.shape)
         poses_reg[...,:2] = poses_reg[...,:2] + noisy_traj_points
         poses_reg[..., 2] = poses_reg[..., 2].tanh() * np.pi
 
@@ -592,7 +592,7 @@ class TrajectoryHead(nn.Module):
         )
 
 
-        plan_anchor = np.load(plan_anchor_path)
+        plan_anchor = np.load('/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy')
 
         self.plan_anchor = nn.Parameter(
             torch.tensor(plan_anchor, dtype=torch.float32),
@@ -712,7 +712,7 @@ class TrajectoryHead(nn.Module):
         noisy_trajs = self.denorm_odo(img)
         ego_fut_mode = img.shape[1]
         for k in roll_timesteps[:]:
-            print("asdf")
+            # print("asdf")
             x_boxes = torch.clamp(img, min=-1, max=1)
             noisy_traj_points = self.denorm_odo(x_boxes)
 

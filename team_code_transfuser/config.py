@@ -121,19 +121,19 @@ class GlobalConfig:
     ]
 
     # Optimization
-    lr = 1e-4 # learning rate
+    lr = 1e-4 # learning rate   #NEED
     multitask = True # whether to use segmentation + depth losses
     ls_seg   = 1.0
     ls_depth = 10.0
 
     # Conv Encoder
-    img_vert_anchors = 5
-    img_horz_anchors = 20 + 2
-    lidar_vert_anchors = 8
-    lidar_horz_anchors = 8
+    img_vert_anchors = 5  #NEED
+    img_horz_anchors = 20 + 2 #NEED
+    lidar_vert_anchors = 8 #NEED
+    lidar_horz_anchors = 8 #NEED
     
-    img_anchors = img_vert_anchors * img_horz_anchors
-    lidar_anchors = lidar_vert_anchors * lidar_horz_anchors
+    img_anchors = img_vert_anchors * img_horz_anchors #NEED
+    lidar_anchors = lidar_vert_anchors * lidar_horz_anchors #NEED
 
     detailed_losses = ['loss_wp', 'loss_bev', 'loss_depth', 'loss_semantic', 'loss_center_heatmap', 'loss_wh',
                        'loss_offset', 'loss_yaw_class', 'loss_yaw_res', 'loss_velocity', 'loss_brake']
@@ -176,17 +176,17 @@ class GlobalConfig:
     ego_extent_z = 0.7553732395172119 # Half the length of the ego car in x direction
 
 	# GPT Encoder
-    n_embd = 512
-    block_exp = 4
-    n_layer = 8
-    n_head = 4
-    n_scale = 4
-    embd_pdrop = 0.1
-    resid_pdrop = 0.1
-    attn_pdrop = 0.1
-    gpt_linear_layer_init_mean = 0.0 # Mean of the normal distribution with which the linear layers in the GPT are initialized
-    gpt_linear_layer_init_std  = 0.02 # Std  of the normal distribution with which the linear layers in the GPT are initialized
-    gpt_layer_norm_init_weight = 1.0 # Initial weight of the layer norms in the gpt.
+    n_embd = 512  #NEED
+    block_exp = 4 #NEED
+    n_layer = 8 #NEED
+    n_head = 4 #NEED
+    n_scale = 4 #NEED
+    embd_pdrop = 0.1 #NEED
+    resid_pdrop = 0.1 #NEED
+    attn_pdrop = 0.1 #NEED
+    gpt_linear_layer_init_mean = 0.0 # Mean of the normal distribution with which the linear layers in the GPT are initialized #NEED
+    gpt_linear_layer_init_std  = 0.02 # Std  of the normal distribution with which the linear layers in the GPT are initialized #NEED
+    gpt_layer_norm_init_weight = 1.0 # Initial weight of the layer norms in the gpt. #NEED
 
     # Controller
     turn_KP = 1.25
@@ -216,21 +216,41 @@ class GlobalConfig:
 
 
     def __init__(self, root_dir='', setting='all', **kwargs):
+        # print(root_dir)
         self.root_dir = root_dir
         if (setting == 'all'): # All towns used for training no validation data
             self.train_towns = os.listdir(self.root_dir)
-            self.val_towns = [self.train_towns[0]]
-            self.train_data, self.val_data = [], []
+            # print(self.train_towns)
+            self.val_towns = ['Town02_Scenario1_run1']
+            self.train_data, self.val_data = {}, {}
+             
             for town in self.train_towns:
+                
                 root_files = os.listdir(os.path.join(self.root_dir, town)) #Town folders
+                
+                temp_list = []
+                
+                if len(root_files) == 0 :
+                    continue
                 for file in root_files:
+                    
+                        
                     if not os.path.isfile(os.path.join(self.root_dir, file)):
-                        self.train_data.append(os.path.join(self.root_dir, town, file))
+                        if not file.endswith(".json"):
+                            temp_list.append(os.path.join(self.root_dir, town, file))
+                self.train_data[os.path.join(self.root_dir, town)] = temp_list
+           
             for town in self.val_towns:
                 root_files = os.listdir(os.path.join(self.root_dir, town))
+                temp_list = []
+                if len(root_files) == 0 :
+                    continue
                 for file in root_files:
                     if not os.path.isfile(os.path.join(self.root_dir, file)):
-                        self.val_data.append(os.path.join(self.root_dir, town, file))
+                        if not file.endswith(".json"):
+                            temp_list.append(os.path.join(self.root_dir, town, file))
+                    self.val_data[os.path.join(self.root_dir, town)] = temp_list
+            # print(self.val_data)       
 
         elif (setting == '02_05_withheld'): #Town02 and 05 withheld during training
             print("Skip Town02 and Town05")

@@ -6,7 +6,7 @@ import math
 
 from path_gen.og import GRUDecoder
 from path_gen.diffusiondrive.modules.blocks import linear_relu_ln
-from utils import *
+from utils_file import *
 from transfuser import TransfuserBackbone, SegDecoder, DepthDecoder
 from geometric_fusion import GeometricFusionBackbone
 from late_fusion import LateFusionBackbone
@@ -806,9 +806,7 @@ class LidarCenterNet(nn.Module):
             # need status_feature
             #
            
-            print(target_point.shape)
-            print(target_point)
-            raise ValueError
+            target_point = target_point.T.to('cuda')
             # if target_point[0] >= x_threshhold:
             #     driving_command = [0, 0, 1, 0]
             # elif target_point[0] <= -x_threshhold:
@@ -841,7 +839,7 @@ class LidarCenterNet(nn.Module):
             # Combine into a single status_feature
             status_feature = torch.cat(
                 [
-                    driving_command,
+                    target_point,
                     velocity_xy.to(torch.float32),
                     acc_xy.to(torch.float32),
                 ],
@@ -937,16 +935,14 @@ class LidarCenterNet(nn.Module):
                                 # gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
-
+        # TODO
         # pred_wp = vlm(forward_pass["trajectory"], rgb)
-
-        return 0, 0
 
         return pred_wp, rotated_bboxes
 
     def forward(self, rgb, lidar_bev, ego_waypoint, target_point, ego_vel , ego_acc, theta ,target_point_image, bev, label, depth, semantic, num_points=None, save_path=None,
                 bev_points=None, cam_points=None):
-        print("here)")
+        # print("here)")
         loss = {}
 
         if (self.use_point_pillars == True):
@@ -1057,8 +1053,8 @@ class LidarCenterNet(nn.Module):
             trajectory_query, agents_query = query_out.split(
                 self._query_splits, dim=1)
 
-            print("trajectory Query")
-            print(trajectory_query.shape)
+            # print("trajectory Query")
+            # print(trajectory_query.shape)
             
             
             loss_dict = self.path_out(
@@ -1072,8 +1068,9 @@ class LidarCenterNet(nn.Module):
             )  # {"trajectory": poses_reg}
  
             
-            print(loss_dict.keys()) # pred output
+            # print(loss_dict.keys()) # pred output
             loss_wp = loss_dict['trajectory_loss']
+            pred_wp = loss_dict['trajectory']
         # pred topdown view
         pred_bev = self.pred_bev(transfuser_feature[0])
         pred_bev = F.interpolate(pred_bev, (self.config.bev_resolution_height,
@@ -1126,7 +1123,7 @@ class LidarCenterNet(nn.Module):
                                         pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
                                         gt_bboxes=label, expert_waypoints=ego_waypoint, stuck_detector=0, forced_move=False)
 
-        return loss
+        return loss, pred_wp
 
     # Converts the coordinate system to x front y right, vehicle center at the origin.
     # Units are converted from pixels to meters

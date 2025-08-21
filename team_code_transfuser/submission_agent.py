@@ -88,7 +88,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             if file.endswith(".pth"):
                 self.model_count += 1
                 print(os.path.join(path_to_conf_file, file))
-                net = LidarCenterNet(self.config, 'cuda', self.backbone, image_architecture, lidar_architecture, use_velocity)
+                net = LidarCenterNet(self.config, 'cuda', self.backbone, 'diffusiondrive', image_architecture, lidar_architecture, use_velocity)
                 if(self.config.sync_batch_norm == True):
                     net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net) # Model was trained with Sync. Batch Norm. Need to convert it otherwise parameters will load incorrectly.
                 state_dict = torch.load(os.path.join(path_to_conf_file, file), map_location='cuda:0')
@@ -198,6 +198,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         speed = input_data['speed'][1]['speed']
         compass = input_data['imu'][1][-1]
         imu_data = input_data['imu'][1]
+        theta = input_data['imu'][1][-1]
 
         accel_x = imu_data[0]
         accel_y = imu_data[1]
@@ -211,7 +212,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                 'gps': gps,
                 'speed': speed,
                 'compass': compass,
-                'acceleration': acceleration
+                'acceleration': acceleration,
+                'theta': theta
                 }
 
         if (self.backbone != 'latentTF'):
@@ -282,6 +284,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
 
         # prepare velocity input
         gt_velocity = torch.FloatTensor([tick_data['speed']]).to('cuda', dtype=torch.float32) # used by controller
+        
         velocity = gt_velocity.reshape(1, 1) # used by transfuser
 
         acceleration = tick_data['acceleration']
@@ -303,6 +306,13 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             for i in range(self.model_count):
                 rotated_bb = []
                 if (self.backbone == 'transFuser'):
+                    pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point=target_point,
+                           target_point_image=target_point_image,
+                           ego_vel=velocity, 
+                           ego_acc=acceleration, 
+                           theta = tick_data['theta'], 
+                           save_path=self.vis_save_path, 
+                           num_points=num_points)
                     pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
                                                           num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,
                                                           forced_move=is_stuck, debug=self.config.debug, rgb_back=self.rgb_back)
@@ -326,7 +336,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
 
                 pred_wps.append(pred_wp)
                 bounding_boxes.append(rotated_bb)
-        return 
+     
 
         bbs_vehicle_coordinate_system = self.non_maximum_suppression(bounding_boxes, self.iou_treshold_nms)
 

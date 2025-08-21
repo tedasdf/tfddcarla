@@ -23,8 +23,6 @@ import pkg_resources
 import sys
 import carla
 import signal
-import glob
-import re
 
 from srunner.scenariomanager.carla_data_provider import *
 from srunner.scenariomanager.timer import GameTime
@@ -73,7 +71,7 @@ class LeaderboardEvaluator(object):
         self.statistics_manager = statistics_manager
         self.sensors = None
         self.sensor_icons = []
-        self._vehicle_lights = carla.VehicleLightState.Position | carla.VehicleLightState.LowBeam #(bit return int)
+        self._vehicle_lights = carla.VehicleLightState.Position | carla.VehicleLightState.LowBeam
 
         # First of all, we need to create the client that will send the requests
         # to the simulator. Here we'll assume the simulator is accepting
@@ -94,7 +92,9 @@ class LeaderboardEvaluator(object):
         # Load agent
         module_name = os.path.basename(args.agent).split('.')[0]
         sys.path.insert(0, os.path.dirname(args.agent))
+        
         self.module_agent = importlib.import_module(module_name)
+        print(self.module_agent)
 
         # Create the ScenarioManager
         self.manager = ScenarioManager(args.timeout, args.debug > 1)
@@ -245,7 +245,7 @@ class LeaderboardEvaluator(object):
         self.statistics_manager.save_record(current_stats_record, config.index, checkpoint)
         self.statistics_manager.save_entry_status(entry_status, False, checkpoint)
 
-    def _load_and_run_scenario(self, args, config, checkpoint):
+    def _load_and_run_scenario(self, args, config):
         """
         Load and run the scenario given by config.
 
@@ -254,7 +254,7 @@ class LeaderboardEvaluator(object):
         """
         crash_message = ""
         entry_status = "Started"
-
+        print("ASDFASDFASDFA")
         print("\n\033[1m========= Preparing {} (repetition {}) =========".format(config.name, config.repetition_index))
         print("> Setting up the agent\033[0m")
 
@@ -281,7 +281,7 @@ class LeaderboardEvaluator(object):
                 AgentWrapper.validate_sensor_configuration(self.sensors, track, args.track)
 
                 self.sensor_icons = [sensors_to_icons[sensor['type']] for sensor in self.sensors]
-                self.statistics_manager.save_sensors(self.sensor_icons, checkpoint)
+                self.statistics_manager.save_sensors(self.sensor_icons, args.checkpoint)
 
             self._agent_watchdog.stop()
 
@@ -294,7 +294,7 @@ class LeaderboardEvaluator(object):
             crash_message = "Agent's sensors were invalid"
             entry_status = "Rejected"
 
-            self._register_statistics(config, checkpoint, entry_status, crash_message)
+            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
             self._cleanup()
             sys.exit(-1)
 
@@ -306,7 +306,7 @@ class LeaderboardEvaluator(object):
 
             crash_message = "Agent couldn't be set up"
 
-            self._register_statistics(config, checkpoint, entry_status, crash_message)
+            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
             self._cleanup()
             return
 
@@ -338,7 +338,7 @@ class LeaderboardEvaluator(object):
             crash_message = "Simulation crashed"
             entry_status = "Crashed"
 
-            self._register_statistics(config, checkpoint, entry_status, crash_message)
+            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
 
             if args.record:
                 self.client.stop_recorder()
@@ -372,7 +372,7 @@ class LeaderboardEvaluator(object):
         try:
             print("\033[1m> Stopping the route\033[0m")
             self.manager.stop_scenario()
-            self._register_statistics(config, checkpoint, entry_status, crash_message)
+            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
 
             if args.record:
                 self.client.stop_recorder()
@@ -396,42 +396,31 @@ class LeaderboardEvaluator(object):
         """
         Run the challenge mode
         """
+        route_indexer = RouteIndexer(args.routes, args.scenarios, args.repetitions)
+        print(route_indexer)
+        print(args.resume)
+        if False:
+            route_indexer.resume(args.checkpoint)
+            self.statistics_manager.resume(args.checkpoint)
+        else:
+            self.statistics_manager.clear_record(args.checkpoint)
+            print("ADSF")
+            route_indexer.save_state(args.checkpoint)
+        
+        while route_indexer.peek():
+            print(route_indexer)
+            # setup
+            config = route_indexer.next()
+            print("HELO")
+            # run
+            self._load_and_run_scenario(args, config)
 
-        scenarios = glob.glob(args.scenarios+"/**/*.json", recursive=True)
-        routes = []
-        checkpoint_endpoints = []
-        for scenario in scenarios:
-            match = re.search(r'([^/]+/[^/]+)\.json$', scenario)
-            name = match.group(1)
-            routes.append(args.routes+name+".xml")
-            print(name)
-            substr = name.index("/")
-            print(name[substr:])
-            checkpoint_endpoints.append(args.checkpoint+name[substr:]+".json")
+            route_indexer.save_state(args.checkpoint)
 
-        for i in range(len(scenarios)):
-            route_indexer = RouteIndexer(routes[i], scenarios[i], args.repetitions)
-
-            if args.resume:
-                route_indexer.resume(checkpoint_endpoints[i])
-                self.statistics_manager.resume(checkpoint_endpoints[i])
-            else:
-                self.statistics_manager.clear_record(checkpoint_endpoints[i])
-                route_indexer.save_state(checkpoint_endpoints[i])
-
-            while route_indexer.peek(): # while loop until all routes
-                # setup
-                config = route_indexer.next()
-
-                # run
-                self._load_and_run_scenario(args, config, checkpoint_endpoints[i])
-
-                route_indexer.save_state(checkpoint_endpoints[i])
-
-            # save global statistics
-            print("\033[1m> Registering the global statistics\033[0m")
-            global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
-            StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, checkpoint_endpoints[i])
+        # save global statistics
+        print("\033[1m> Registering the global statistics\033[0m")
+        global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
+        StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
 
 
 def main():

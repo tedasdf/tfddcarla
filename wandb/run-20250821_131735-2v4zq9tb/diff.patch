@@ -1,0 +1,2078 @@
+diff --git a/Town10HD_Scenario10.json b/Town10HD_Scenario10.json
+deleted file mode 100644
+index a190527..0000000
+--- a/Town10HD_Scenario10.json
++++ /dev/null
+@@ -1,712 +0,0 @@
+-{
+-    "_checkpoint": {
+-        "global_record": {
+-            "index": -1,
+-            "infractions": {
+-                "collisions_layout": 0.0,
+-                "collisions_pedestrian": 0.0,
+-                "collisions_vehicle": 0.0,
+-                "outside_route_lanes": 0.0,
+-                "red_light": 0.0,
+-                "route_dev": 0.0,
+-                "route_timeout": 0.2663629282505057,
+-                "stop_infraction": 0.0,
+-                "vehicle_blocked": 0.0
+-            },
+-            "meta": {
+-                "exceptions": [
+-                    [
+-                        "RouteScenario_5",
+-                        5,
+-                        "Failed - Agent timed out"
+-                    ]
+-                ]
+-            },
+-            "route_id": -1,
+-            "scores": {
+-                "score_composed": 98.31133801184525,
+-                "score_penalty": 1.0,
+-                "score_route": 98.31133801184525
+-            },
+-            "status": "Failed"
+-        },
+-        "progress": [
+-            24,
+-            24
+-        ],
+-        "records": [
+-            {
+-                "index": 0,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 53.750000800937414,
+-                    "duration_system": 457.0919575691223,
+-                    "route_length": 61.769218620832575
+-                },
+-                "route_id": "RouteScenario_0",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 1,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 27.3000004068017,
+-                    "duration_system": 180.3583629131317,
+-                    "route_length": 90.91999576087255
+-                },
+-                "route_id": "RouteScenario_1",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 2,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 32.00000047683716,
+-                    "duration_system": 212.50026988983154,
+-                    "route_length": 90.91999576087255
+-                },
+-                "route_id": "RouteScenario_2",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 3,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 39.800000593066216,
+-                    "duration_system": 286.6734323501587,
+-                    "route_length": 90.92000339023687
+-                },
+-                "route_id": "RouteScenario_3",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 4,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 35.80000053346157,
+-                    "duration_system": 279.6680738925934,
+-                    "route_length": 90.92000339023687
+-                },
+-                "route_id": "RouteScenario_4",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 5,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [
+-                        "Route timeout."
+-                    ],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 70.05000104382634,
+-                    "duration_system": 485.3933663368225,
+-                    "route_length": 63.12666639778303
+-                },
+-                "route_id": "RouteScenario_5",
+-                "scores": {
+-                    "score_composed": 59.47211228428604,
+-                    "score_penalty": 1.0,
+-                    "score_route": 59.47211228428604
+-                },
+-                "status": "Failed - Agent timed out"
+-            },
+-            {
+-                "index": 6,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 27.10000040382147,
+-                    "duration_system": 260.0989820957184,
+-                    "route_length": 91.00015362020628
+-                },
+-                "route_id": "RouteScenario_6",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 7,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 28.300000421702862,
+-                    "duration_system": 297.6350631713867,
+-                    "route_length": 91.00014098142056
+-                },
+-                "route_id": "RouteScenario_7",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 8,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 38.70000057667494,
+-                    "duration_system": 272.045086145401,
+-                    "route_length": 67.64574615097268
+-                },
+-                "route_id": "RouteScenario_8",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 9,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 33.80000050365925,
+-                    "duration_system": 283.7495541572571,
+-                    "route_length": 52.489470061275334
+-                },
+-                "route_id": "RouteScenario_9",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 10,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 38.250000569969416,
+-                    "duration_system": 272.2130172252655,
+-                    "route_length": 90.92969196165583
+-                },
+-                "route_id": "RouteScenario_10",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 11,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 39.25000058487058,
+-                    "duration_system": 257.09852600097656,
+-                    "route_length": 90.99999697450485
+-                },
+-                "route_id": "RouteScenario_11",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 12,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 23.75000035390258,
+-                    "duration_system": 209.1399450302124,
+-                    "route_length": 51.029362770534405
+-                },
+-                "route_id": "RouteScenario_12",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 13,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 37.750000562518835,
+-                    "duration_system": 313.5041289329529,
+-                    "route_length": 68.41957078972017
+-                },
+-                "route_id": "RouteScenario_13",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 14,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 42.55000063404441,
+-                    "duration_system": 441.1787052154541,
+-                    "route_length": 90.91045157935822
+-                },
+-                "route_id": "RouteScenario_14",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 15,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 33.400000497698784,
+-                    "duration_system": 235.3105652332306,
+-                    "route_length": 90.91000549856139
+-                },
+-                "route_id": "RouteScenario_15",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 16,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 27.500000409781933,
+-                    "duration_system": 221.87192749977112,
+-                    "route_length": 69.67151114092613
+-                },
+-                "route_id": "RouteScenario_16",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 17,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 45.200000673532486,
+-                    "duration_system": 434.06553173065186,
+-                    "route_length": 52.21923737531206
+-                },
+-                "route_id": "RouteScenario_17",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 18,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 27.500000409781933,
+-                    "duration_system": 227.23441457748413,
+-                    "route_length": 88.41961034229872
+-                },
+-                "route_id": "RouteScenario_18",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 19,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 25.700000382959843,
+-                    "duration_system": 204.39874935150146,
+-                    "route_length": 86.95698450255418
+-                },
+-                "route_id": "RouteScenario_19",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 20,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 26.650000397115946,
+-                    "duration_system": 198.05654335021973,
+-                    "route_length": 91.34686485350724
+-                },
+-                "route_id": "RouteScenario_20",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 21,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 64.60000096261501,
+-                    "duration_system": 531.5580160617828,
+-                    "route_length": 89.88291494303328
+-                },
+-                "route_id": "RouteScenario_21",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 22,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 23.650000352412462,
+-                    "duration_system": 193.24350452423096,
+-                    "route_length": 61.03979351032746
+-                },
+-                "route_id": "RouteScenario_22",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            },
+-            {
+-                "index": 23,
+-                "infractions": {
+-                    "collisions_layout": [],
+-                    "collisions_pedestrian": [],
+-                    "collisions_vehicle": [],
+-                    "outside_route_lanes": [],
+-                    "red_light": [],
+-                    "route_dev": [],
+-                    "route_timeout": [],
+-                    "stop_infraction": [],
+-                    "vehicle_blocked": []
+-                },
+-                "meta": {
+-                    "duration_game": 21.600000321865082,
+-                    "duration_system": 119.07355260848999,
+-                    "route_length": 55.85788402892414
+-                },
+-                "route_id": "RouteScenario_23",
+-                "scores": {
+-                    "score_composed": 100.0,
+-                    "score_penalty": 1.0,
+-                    "score_route": 100.0
+-                },
+-                "status": "Completed"
+-            }
+-        ]
+-    },
+-    "eligible": true,
+-    "entry_status": "Finished with agent errors",
+-    "labels": [
+-        "Avg. driving score",
+-        "Avg. route completion",
+-        "Avg. infraction penalty",
+-        "Collisions with pedestrians",
+-        "Collisions with vehicles",
+-        "Collisions with layout",
+-        "Red lights infractions",
+-        "Stop sign infractions",
+-        "Off-road infractions",
+-        "Route deviations",
+-        "Route timeouts",
+-        "Agent blocked"
+-    ],
+-    "sensors": [
+-        "carla_opendrive_map",
+-        "carla_imu",
+-        "carla_gnss",
+-        "carla_speedometer",
+-        "carla_camera",
+-        "carla_camera",
+-        "carla_camera",
+-        "carla_lidar",
+-        "carla_camera",
+-        "carla_camera",
+-        "carla_camera",
+-        "carla_camera",
+-        "carla_camera",
+-        "carla_camera"
+-    ],
+-    "values": [
+-        "98.311",
+-        "98.311",
+-        "1.000",
+-        "0.000",
+-        "0.000",
+-        "0.000",
+-        "0.000",
+-        "0.000",
+-        "0.000",
+-        "0.000",
+-        "0.266",
+-        "0.000"
+-    ]
+-}
+\ No newline at end of file
+diff --git a/leaderboard/leaderboard/leaderboard_evaluator_local.py b/leaderboard/leaderboard/leaderboard_evaluator_local.py
+index cef55e9..e680f12 100644
+--- a/leaderboard/leaderboard/leaderboard_evaluator_local.py
++++ b/leaderboard/leaderboard/leaderboard_evaluator_local.py
+@@ -23,8 +23,6 @@ import pkg_resources
+ import sys
+ import carla
+ import signal
+-import glob
+-import re
+ 
+ from srunner.scenariomanager.carla_data_provider import *
+ from srunner.scenariomanager.timer import GameTime
+@@ -73,7 +71,7 @@ class LeaderboardEvaluator(object):
+         self.statistics_manager = statistics_manager
+         self.sensors = None
+         self.sensor_icons = []
+-        self._vehicle_lights = carla.VehicleLightState.Position | carla.VehicleLightState.LowBeam #(bit return int)
++        self._vehicle_lights = carla.VehicleLightState.Position | carla.VehicleLightState.LowBeam
+ 
+         # First of all, we need to create the client that will send the requests
+         # to the simulator. Here we'll assume the simulator is accepting
+@@ -94,7 +92,9 @@ class LeaderboardEvaluator(object):
+         # Load agent
+         module_name = os.path.basename(args.agent).split('.')[0]
+         sys.path.insert(0, os.path.dirname(args.agent))
++        
+         self.module_agent = importlib.import_module(module_name)
++        print(self.module_agent)
+ 
+         # Create the ScenarioManager
+         self.manager = ScenarioManager(args.timeout, args.debug > 1)
+@@ -245,7 +245,7 @@ class LeaderboardEvaluator(object):
+         self.statistics_manager.save_record(current_stats_record, config.index, checkpoint)
+         self.statistics_manager.save_entry_status(entry_status, False, checkpoint)
+ 
+-    def _load_and_run_scenario(self, args, config, checkpoint):
++    def _load_and_run_scenario(self, args, config):
+         """
+         Load and run the scenario given by config.
+ 
+@@ -254,7 +254,7 @@ class LeaderboardEvaluator(object):
+         """
+         crash_message = ""
+         entry_status = "Started"
+-
++        print("ASDFASDFASDFA")
+         print("\n\033[1m========= Preparing {} (repetition {}) =========".format(config.name, config.repetition_index))
+         print("> Setting up the agent\033[0m")
+ 
+@@ -281,7 +281,7 @@ class LeaderboardEvaluator(object):
+                 AgentWrapper.validate_sensor_configuration(self.sensors, track, args.track)
+ 
+                 self.sensor_icons = [sensors_to_icons[sensor['type']] for sensor in self.sensors]
+-                self.statistics_manager.save_sensors(self.sensor_icons, checkpoint)
++                self.statistics_manager.save_sensors(self.sensor_icons, args.checkpoint)
+ 
+             self._agent_watchdog.stop()
+ 
+@@ -294,7 +294,7 @@ class LeaderboardEvaluator(object):
+             crash_message = "Agent's sensors were invalid"
+             entry_status = "Rejected"
+ 
+-            self._register_statistics(config, checkpoint, entry_status, crash_message)
++            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
+             self._cleanup()
+             sys.exit(-1)
+ 
+@@ -306,7 +306,7 @@ class LeaderboardEvaluator(object):
+ 
+             crash_message = "Agent couldn't be set up"
+ 
+-            self._register_statistics(config, checkpoint, entry_status, crash_message)
++            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
+             self._cleanup()
+             return
+ 
+@@ -338,7 +338,7 @@ class LeaderboardEvaluator(object):
+             crash_message = "Simulation crashed"
+             entry_status = "Crashed"
+ 
+-            self._register_statistics(config, checkpoint, entry_status, crash_message)
++            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
+ 
+             if args.record:
+                 self.client.stop_recorder()
+@@ -372,7 +372,7 @@ class LeaderboardEvaluator(object):
+         try:
+             print("\033[1m> Stopping the route\033[0m")
+             self.manager.stop_scenario()
+-            self._register_statistics(config, checkpoint, entry_status, crash_message)
++            self._register_statistics(config, args.checkpoint, entry_status, crash_message)
+ 
+             if args.record:
+                 self.client.stop_recorder()
+@@ -396,42 +396,31 @@ class LeaderboardEvaluator(object):
+         """
+         Run the challenge mode
+         """
+-
+-        scenarios = glob.glob(args.scenarios+"/**/*.json", recursive=True)
+-        routes = []
+-        checkpoint_endpoints = []
+-        for scenario in scenarios:
+-            match = re.search(r'([^/]+/[^/]+)\.json$', scenario)
+-            name = match.group(1)
+-            routes.append(args.routes+name+".xml")
+-            print(name)
+-            substr = name.index("/")
+-            print(name[substr:])
+-            checkpoint_endpoints.append(args.checkpoint+name[substr:]+".json")
+-
+-        for i in range(len(scenarios)):
+-            route_indexer = RouteIndexer(routes[i], scenarios[i], args.repetitions)
+-
+-            if args.resume:
+-                route_indexer.resume(checkpoint_endpoints[i])
+-                self.statistics_manager.resume(checkpoint_endpoints[i])
+-            else:
+-                self.statistics_manager.clear_record(checkpoint_endpoints[i])
+-                route_indexer.save_state(checkpoint_endpoints[i])
+-
+-            while route_indexer.peek(): # while loop until all routes
+-                # setup
+-                config = route_indexer.next()
+-
+-                # run
+-                self._load_and_run_scenario(args, config, checkpoint_endpoints[i])
+-
+-                route_indexer.save_state(checkpoint_endpoints[i])
+-
+-            # save global statistics
+-            print("\033[1m> Registering the global statistics\033[0m")
+-            global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
+-            StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, checkpoint_endpoints[i])
++        route_indexer = RouteIndexer(args.routes, args.scenarios, args.repetitions)
++        print(route_indexer)
++        print(args.resume)
++        if False:
++            route_indexer.resume(args.checkpoint)
++            self.statistics_manager.resume(args.checkpoint)
++        else:
++            self.statistics_manager.clear_record(args.checkpoint)
++            print("ADSF")
++            route_indexer.save_state(args.checkpoint)
++        
++        while route_indexer.peek():
++            print(route_indexer)
++            # setup
++            config = route_indexer.next()
++            print("HELO")
++            # run
++            self._load_and_run_scenario(args, config)
++
++            route_indexer.save_state(args.checkpoint)
++
++        # save global statistics
++        print("\033[1m> Registering the global statistics\033[0m")
++        global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
++        StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
+ 
+ 
+ def main():
+@@ -489,4 +478,4 @@ def main():
+ 
+ 
+ if __name__ == '__main__':
+-    main()
++    main()
+\ No newline at end of file
+diff --git a/leaderboard/leaderboard/utils/route_indexer.py b/leaderboard/leaderboard/utils/route_indexer.py
+index acd5d5f..aaf4e54 100644
+--- a/leaderboard/leaderboard/utils/route_indexer.py
++++ b/leaderboard/leaderboard/utils/route_indexer.py
+@@ -2,8 +2,40 @@ from collections import OrderedDict
+ from dictor import dictor
+ 
+ import copy
++import carla
++class ScenarioConfiguration(object):
++
++    """
++    This class provides a basic scenario configuration incl.:
++    - configurations for all actors
++    - town, where the scenario should be executed
++    - name of the scenario (e.g. ControlLoss_1)
++    - type is the class of scenario (e.g. ControlLoss)
++    """
++
++    trigger_points = []
++    ego_vehicles = []
++    other_actors = []
++    town = None
++    name = None
++    type = None
++    route = None
++    agent = None
++    weather = carla.WeatherParameters()
++    friction = None
++    subtype = None
++    route_var_name = None
++
++
++class RouteScenarioConfiguration(ScenarioConfiguration):
++
++    """
++    Basic configuration of a RouteScenario
++    """
++
++    trajectory = None
++    scenario_file = None
+ 
+-from srunner.scenarioconfigs.route_scenario_configuration import RouteScenarioConfiguration
+ 
+ 
+ from leaderboard.utils.route_parser import RouteParser
+@@ -12,6 +44,7 @@ from leaderboard.utils.checkpoint_tools import fetch_dict, create_default_json_m
+ 
+ class RouteIndexer():
+     def __init__(self, routes_file, scenarios_file, repetitions):
++        print("transfuser Garage")
+         self._routes_file = routes_file
+         self._scenarios_file = scenarios_file
+         self._repetitions = repetitions
+@@ -33,18 +66,23 @@ class RouteIndexer():
+                 self._configs_dict['{}.{}'.format(config.name, repetition)] = copy.copy(config)
+ 
+         self._configs_list = list(self._configs_dict.items())
++        print("PRINTING JE CONFIG LIST")
+         print(len(self._configs_list))
+ 
+     def peek(self):
++        print("PEEK VALUE",not (self._index >= len(self._configs_list)))
++        print("INDEX LISt", self._index)
+         return not (self._index >= len(self._configs_list))
+ 
+     def next(self):
+         if self._index >= len(self._configs_list):
++            print("WHY")
+             return None
+ 
+         key, config = self._configs_list[self._index]
+         self._index += 1
+-
++        print("CONFIG PATj POR QUE")
++        print(config)
+         return config
+ 
+     def resume(self, endpoint):
+@@ -65,9 +103,13 @@ class RouteIndexer():
+                           'larger than maximum number of routes {}'.format(current_route, self.total))
+ 
+     def save_state(self, endpoint):
++        print("SAVING STATE")
++        print(self._index)
+         data = fetch_dict(endpoint)
++        print(self._index)
+         if not data:
+             data = create_default_json_msg()
+         data['_checkpoint']['progress'] = [self._index, self.total]
+-
++        print(self._index)
+         save_dict(endpoint, data)
++        print(self._index)
+\ No newline at end of file
+diff --git a/leaderboard/scripts/local_evaluation.sh b/leaderboard/scripts/local_evaluation.sh
+index c4a9115..ee6d514 100755
+--- a/leaderboard/scripts/local_evaluation.sh
++++ b/leaderboard/scripts/local_evaluation.sh
+@@ -1,5 +1,5 @@
+-export CARLA_ROOT=${1:-/home/fypits25/Documents/CARLA_0.9.10.1}
+-export WORK_DIR=${2:-/home/fypits25/Documents/transfuser}
++export CARLA_ROOT=${1:-/home/fypits25/Documents/tfddcarla/carla}
++export WORK_DIR=${2:-/home/fypits25/Documents/tfddcarla}
+ 
+ export CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh
+ export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI
+@@ -15,12 +15,12 @@ export REPETITIONS=1
+ export CHALLENGE_TRACK_CODENAME=SENSORS
+ export CHECKPOINT_ENDPOINT=${WORK_DIR}/results/transfuser_longest6.json
+ export TEAM_AGENT=${WORK_DIR}/team_code_transfuser/submission_agent.py
+-export TEAM_CONFIG=${WORK_DIR}/model_ckpt/transfuser
++export TEAM_CONFIG=/home/fypits25/Documents/tfddcarla/model_ckpt/models_2022/transfuser
+ export DEBUG_CHALLENGE=0
+ export RESUME=1
+ export DATAGEN=0
+ 
+-python3 ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \
++python3 ${WORK_DIR}/leaderboard/leaderboard/leaderboard_evaluator_local.py \
+ --scenarios=${SCENARIOS}  \
+ --routes=${ROUTES} \
+ --repetitions=${REPETITIONS} \
+diff --git a/team_code_transfuser/config.py b/team_code_transfuser/config.py
+index 2fa8032..a9a0a87 100644
+--- a/team_code_transfuser/config.py
++++ b/team_code_transfuser/config.py
+@@ -121,19 +121,19 @@ class GlobalConfig:
+     ]
+ 
+     # Optimization
+-    lr = 1e-4 # learning rate
++    lr = 1e-4 # learning rate   #NEED
+     multitask = True # whether to use segmentation + depth losses
+     ls_seg   = 1.0
+     ls_depth = 10.0
+ 
+     # Conv Encoder
+-    img_vert_anchors = 5
+-    img_horz_anchors = 20 + 2
+-    lidar_vert_anchors = 8
+-    lidar_horz_anchors = 8
++    img_vert_anchors = 5  #NEED
++    img_horz_anchors = 20 + 2 #NEED
++    lidar_vert_anchors = 8 #NEED
++    lidar_horz_anchors = 8 #NEED
+     
+-    img_anchors = img_vert_anchors * img_horz_anchors
+-    lidar_anchors = lidar_vert_anchors * lidar_horz_anchors
++    img_anchors = img_vert_anchors * img_horz_anchors #NEED
++    lidar_anchors = lidar_vert_anchors * lidar_horz_anchors #NEED
+ 
+     detailed_losses = ['loss_wp', 'loss_bev', 'loss_depth', 'loss_semantic', 'loss_center_heatmap', 'loss_wh',
+                        'loss_offset', 'loss_yaw_class', 'loss_yaw_res', 'loss_velocity', 'loss_brake']
+@@ -176,17 +176,17 @@ class GlobalConfig:
+     ego_extent_z = 0.7553732395172119 # Half the length of the ego car in x direction
+ 
+ 	# GPT Encoder
+-    n_embd = 512
+-    block_exp = 4
+-    n_layer = 8
+-    n_head = 4
+-    n_scale = 4
+-    embd_pdrop = 0.1
+-    resid_pdrop = 0.1
+-    attn_pdrop = 0.1
+-    gpt_linear_layer_init_mean = 0.0 # Mean of the normal distribution with which the linear layers in the GPT are initialized
+-    gpt_linear_layer_init_std  = 0.02 # Std  of the normal distribution with which the linear layers in the GPT are initialized
+-    gpt_layer_norm_init_weight = 1.0 # Initial weight of the layer norms in the gpt.
++    n_embd = 512  #NEED
++    block_exp = 4 #NEED
++    n_layer = 8 #NEED
++    n_head = 4 #NEED
++    n_scale = 4 #NEED
++    embd_pdrop = 0.1 #NEED
++    resid_pdrop = 0.1 #NEED
++    attn_pdrop = 0.1 #NEED
++    gpt_linear_layer_init_mean = 0.0 # Mean of the normal distribution with which the linear layers in the GPT are initialized #NEED
++    gpt_linear_layer_init_std  = 0.02 # Std  of the normal distribution with which the linear layers in the GPT are initialized #NEED
++    gpt_layer_norm_init_weight = 1.0 # Initial weight of the layer norms in the gpt. #NEED
+ 
+     # Controller
+     turn_KP = 1.25
+@@ -216,21 +216,41 @@ class GlobalConfig:
+ 
+ 
+     def __init__(self, root_dir='', setting='all', **kwargs):
++        print(root_dir)
+         self.root_dir = root_dir
+         if (setting == 'all'): # All towns used for training no validation data
+             self.train_towns = os.listdir(self.root_dir)
+-            self.val_towns = [self.train_towns[0]]
+-            self.train_data, self.val_data = [], []
++            print(self.train_towns)
++            self.val_towns = ['Town02_Scenario1_run1']
++            self.train_data, self.val_data = {}, {}
++             
+             for town in self.train_towns:
++                
+                 root_files = os.listdir(os.path.join(self.root_dir, town)) #Town folders
++                
++                temp_list = []
++                
++                if len(root_files) == 0 :
++                    continue
+                 for file in root_files:
++                    
++                        
+                     if not os.path.isfile(os.path.join(self.root_dir, file)):
+-                        self.train_data.append(os.path.join(self.root_dir, town, file))
++                        if not file.endswith(".json"):
++                            temp_list.append(os.path.join(self.root_dir, town, file))
++                self.train_data[os.path.join(self.root_dir, town)] = temp_list
++           
+             for town in self.val_towns:
+                 root_files = os.listdir(os.path.join(self.root_dir, town))
++                temp_list = []
++                if len(root_files) == 0 :
++                    continue
+                 for file in root_files:
+                     if not os.path.isfile(os.path.join(self.root_dir, file)):
+-                        self.val_data.append(os.path.join(self.root_dir, town, file))
++                        if not file.endswith(".json"):
++                            temp_list.append(os.path.join(self.root_dir, town, file))
++                    self.val_data[os.path.join(self.root_dir, town)] = temp_list
++            print(self.val_data)       
+ 
+         elif (setting == '02_05_withheld'): #Town02 and 05 withheld during training
+             print("Skip Town02 and Town05")
+diff --git a/team_code_transfuser/data.py b/team_code_transfuser/data.py
+index 4f3cd3e..951033b 100644
+--- a/team_code_transfuser/data.py
++++ b/team_code_transfuser/data.py
+@@ -10,8 +10,9 @@ import cv2
+ import random
+ from copy import deepcopy
+ import io
++import json
+ 
+-from utils import get_vehicle_to_virtual_lidar_transform, get_vehicle_to_lidar_transform, get_lidar_to_vehicle_transform, get_lidar_to_bevimage_transform
++from utils_file import get_vehicle_to_virtual_lidar_transform, get_vehicle_to_lidar_transform, get_lidar_to_vehicle_transform, get_lidar_to_bevimage_transform
+ 
+ class CARLA_Data(Dataset):
+ 
+@@ -42,50 +43,75 @@ class CARLA_Data(Dataset):
+         self.lidars = []
+         self.labels = []
+         self.measurements = []
+-
+-
++        print("THSIS IS ROOT")
++        print(root)
+         for sub_root in tqdm(root, file=sys.stdout):
+-            sub_root = Path(sub_root)
+-
+-            # list sub-directories in root
+-            root_files = os.listdir(sub_root)
+-            routes = [folder for folder in root_files if not os.path.isfile(os.path.join(sub_root,folder))]
+-            for route in routes:
+-                route_dir = sub_root
+-                num_seq = len(os.listdir(route_dir / "lidar"))
+-
+-                # ignore the first two and last two frame
+-                for seq in range(2, num_seq - self.pred_len - self.seq_len - 2):
+-                    # load input seq and pred seq jointly
+-                    image = []
+-                    bev = []
+-                    depth = []
+-                    semantic = []
+-                    lidar = []
+-                    label = []
+-                    measurement= []
+-                    sequence_folders = []
+-                    # Loads the current (and past) frames (if seq_len > 1)
+-                    for idx in range(self.seq_len):
+-                        image.append(route_dir / "rgb" / ("%04d.png" % (seq + idx)))
+-                        bev.append(route_dir / "topdown" / ("encoded_%04d.png" % (seq + idx)))
+-                        depth.append(route_dir / "depth" / ("%04d.png" % (seq + idx)))
+-                        semantic.append(route_dir / "semantics" / ("%04d.png" % (seq + idx)))
+-                        lidar.append(route_dir / "lidar" / ("%04d.npy" % (seq + idx)))
+-                        measurement.append(route_dir / "measurements" / ("%04d.json"%(seq+idx)))
+-                    
+-                    # Additionally load future labels of the waypoints
+-                    for idx in range(self.seq_len + self.pred_len):
+-                        label.append(route_dir / "label_raw" / ("%04d.json" % (seq + idx)))
+-
+-                    self.images.append(image)
+-                    self.bevs.append(bev)
+-                    self.depths.append(depth)
+-                    self.semantics.append(semantic)
+-                    self.lidars.append(lidar)
+-                    self.labels.append(label)
+-                    self.measurements.append(measurement)
++            sub_root_path = Path(sub_root)  # convert key/folder name to Path
++            json_file_path = []
++            for json_file in sub_root_path.glob("*.json"):
++                # json_file is a Path object, you can get the full path as a string
++                print("JSON file path:", json_file.resolve())  # absolute path
++                print("Or relative path:", json_file)   
++                json_file_path.append(json_file)
++            if len(json_file_path) != 1:
++                continue
++
++            print(root)
++            print("THIS IS SUB")
++            print(sub_root)
++            with open(json_file, "r") as f:
++                data = json.load(f)
++            yesorno = data['_checkpoint']['records']
++           
++            for record, sub_sub_root in zip(yesorno, root[sub_root]):
++                if record['status'] != "Completed":
++                    print(record['status'])
++                    continue
++                print(sub_sub_root)
++                sub_root = Path(sub_sub_root)
++
++                # if not os.path.isdir(sub_root):
++                #     continue
++                # list sub-directories in root
++                root_files = os.listdir(sub_root)
++                routes = [folder for folder in root_files if not os.path.isfile(os.path.join(sub_root,folder))]
++                for route in routes:
++                    route_dir = sub_root
++                    num_seq = len(os.listdir(route_dir / "lidar"))
++
+                     
++                    # ignore the first two and last two frame
++                    for seq in range(2, num_seq - self.pred_len - self.seq_len - 2):
++                        # load input seq and pred seq jointly
++                        image = []
++                        bev = []
++                        depth = []
++                        semantic = []
++                        lidar = []
++                        label = []
++                        measurement= []
++                        sequence_folders = []
++                        # Loads the current (and past) frames (if seq_len > 1)
++                        for idx in range(self.seq_len):
++                            image.append(route_dir / "rgb" / ("%04d.png" % (seq + idx)))
++                            bev.append(route_dir / "topdown" / ("encoded_%04d.png" % (seq + idx)))
++                            depth.append(route_dir / "depth" / ("%04d.png" % (seq + idx)))
++                            semantic.append(route_dir / "semantics" / ("%04d.png" % (seq + idx)))
++                            lidar.append(route_dir / "lidar" / ("%04d.npy" % (seq + idx)))
++                            measurement.append(route_dir / "measurements" / ("%04d.json"%(seq+idx)))
++                        
++                        # Additionally load future labels of the waypoints
++                        for idx in range(self.seq_len + self.pred_len):
++                            label.append(route_dir / "label_raw" / ("%04d.json" % (seq + idx)))
++
++                        self.images.append(image)
++                        self.bevs.append(bev)
++                        self.depths.append(depth)
++                        self.semantics.append(semantic)
++                        self.lidars.append(lidar)
++                        self.labels.append(label)
++                        self.measurements.append(measurement)
++                        
+         # There is a complex "memory leak"/performance issue when using Python objects like lists in a Dataloader that is loaded with multiprocessing, num_workers > 0
+         # A summary of that ongoing discussion can be found here https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
+         # A workaround is to store the string lists as numpy byte objects because they only have 1 refcount.
+diff --git a/team_code_transfuser/logdir/transfuser/args.txt b/team_code_transfuser/logdir/transfuser/args.txt
+deleted file mode 100644
+index 6cbcae5..0000000
+--- a/team_code_transfuser/logdir/transfuser/args.txt
++++ /dev/null
+@@ -1,28 +0,0 @@
+-{
+-  "id": "transfuser",
+-  "epochs": 41,
+-  "lr": 0.0001,
+-  "batch_size": 10,
+-  "logdir": "./logdir/transfuser",
+-  "load_file": null,
+-  "start_epoch": 0,
+-  "setting": "all",
+-  "root_dir": "../results_test",
+-  "schedule": 1,
+-  "schedule_reduce_epoch_01": 30,
+-  "schedule_reduce_epoch_02": 40,
+-  "backbone": "transFuser",
+-  "image_architecture": "regnety_032",
+-  "lidar_architecture": "regnety_032",
+-  "use_velocity": 0,
+-  "n_layer": 4,
+-  "wp_only": 0,
+-  "use_target_point_image": 1,
+-  "use_point_pillars": 0,
+-  "parallel_training": 0,
+-  "val_every": 5,
+-  "no_bev_loss": 0,
+-  "sync_batch_norm": 0,
+-  "zero_redundancy_optimizer": 0,
+-  "use_disk_cache": 0
+-}
+\ No newline at end of file
+diff --git a/team_code_transfuser/model.py b/team_code_transfuser/model.py
+index d71fac8..449937c 100644
+--- a/team_code_transfuser/model.py
++++ b/team_code_transfuser/model.py
+@@ -6,7 +6,7 @@ import math
+ 
+ from path_gen.og import GRUDecoder
+ from path_gen.diffusiondrive.modules.blocks import linear_relu_ln
+-from utils import *
++from utils_file import *
+ from transfuser import TransfuserBackbone, SegDecoder, DepthDecoder
+ from geometric_fusion import GeometricFusionBackbone
+ from late_fusion import LateFusionBackbone
+@@ -806,9 +806,7 @@ class LidarCenterNet(nn.Module):
+             # need status_feature
+             #
+            
+-            print(target_point.shape)
+-            print(target_point)
+-            raise ValueError
++            target_point = target_point.T.to('cuda')
+             # if target_point[0] >= x_threshhold:
+             #     driving_command = [0, 0, 1, 0]
+             # elif target_point[0] <= -x_threshhold:
+@@ -841,7 +839,7 @@ class LidarCenterNet(nn.Module):
+             # Combine into a single status_feature
+             status_feature = torch.cat(
+                 [
+-                    driving_command,
++                    target_point,
+                     velocity_xy.to(torch.float32),
+                     acc_xy.to(torch.float32),
+                 ],
+@@ -937,11 +935,9 @@ class LidarCenterNet(nn.Module):
+                                 # gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
+ 
+         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
+-
++        # TODO
+         # pred_wp = vlm(forward_pass["trajectory"], rgb)
+ 
+-        return 0, 0
+-
+         return pred_wp, rotated_bboxes
+ 
+     def forward(self, rgb, lidar_bev, ego_waypoint, target_point, ego_vel , ego_acc, theta ,target_point_image, bev, label, depth, semantic, num_points=None, save_path=None,
+@@ -1074,6 +1070,7 @@ class LidarCenterNet(nn.Module):
+             
+             print(loss_dict.keys()) # pred output
+             loss_wp = loss_dict['trajectory_loss']
++            pred_wp = loss_dict['trajectory']
+         # pred topdown view
+         pred_bev = self.pred_bev(transfuser_feature[0])
+         pred_bev = F.interpolate(pred_bev, (self.config.bev_resolution_height,
+@@ -1126,7 +1123,7 @@ class LidarCenterNet(nn.Module):
+                                         pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+                                         gt_bboxes=label, expert_waypoints=ego_waypoint, stuck_detector=0, forced_move=False)
+ 
+-        return loss
++        return loss, pred_wp
+ 
+     # Converts the coordinate system to x front y right, vehicle center at the origin.
+     # Units are converted from pixels to meters
+diff --git a/team_code_transfuser/path_gen/diffusiondrive/transfuser_model_v2.py b/team_code_transfuser/path_gen/diffusiondrive/transfuser_model_v2.py
+index 681eb2f..1cf0fcf 100644
+--- a/team_code_transfuser/path_gen/diffusiondrive/transfuser_model_v2.py
++++ b/team_code_transfuser/path_gen/diffusiondrive/transfuser_model_v2.py
+@@ -592,7 +592,7 @@ class TrajectoryHead(nn.Module):
+         )
+ 
+ 
+-        plan_anchor = np.load(plan_anchor_path)
++        plan_anchor = np.load('/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy')
+ 
+         self.plan_anchor = nn.Parameter(
+             torch.tensor(plan_anchor, dtype=torch.float32),
+diff --git a/team_code_transfuser/path_visualiser.py b/team_code_transfuser/path_visualiser.py
+index 73d8d82..2b17f7b 100644
+--- a/team_code_transfuser/path_visualiser.py
++++ b/team_code_transfuser/path_visualiser.py
+@@ -4,7 +4,6 @@ import numpy as np
+ def visualise_from_tensor(waypoints):
+     cmap = plt.cm.get_cmap('tab20')  # 20 distinct colors
+     num_traj_sets = len(waypoints[0])
+-    print("roke")
+     for i, traj_set in enumerate(waypoints[0]):
+         np_traj_set = traj_set.cpu().detach().numpy()
+         x = []
+@@ -14,5 +13,4 @@ def visualise_from_tensor(waypoints):
+             y.append(coord[1])
+         plt.plot(x, y, color=cmap(i % cmap.N))  # Pick color per trajectory
+ 
+-    print("shit broke")
+     plt.show()
+diff --git a/team_code_transfuser/submission_agent.py b/team_code_transfuser/submission_agent.py
+index 343b6ba..3faf836 100644
+--- a/team_code_transfuser/submission_agent.py
++++ b/team_code_transfuser/submission_agent.py
+@@ -88,7 +88,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
+             if file.endswith(".pth"):
+                 self.model_count += 1
+                 print(os.path.join(path_to_conf_file, file))
+-                net = LidarCenterNet(self.config, 'cuda', self.backbone, image_architecture, lidar_architecture, use_velocity)
++                net = LidarCenterNet(self.config, 'cuda', self.backbone, 'diffusiondrive', image_architecture, lidar_architecture, use_velocity)
+                 if(self.config.sync_batch_norm == True):
+                     net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net) # Model was trained with Sync. Batch Norm. Need to convert it otherwise parameters will load incorrectly.
+                 state_dict = torch.load(os.path.join(path_to_conf_file, file), map_location='cuda:0')
+@@ -198,6 +198,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
+         speed = input_data['speed'][1]['speed']
+         compass = input_data['imu'][1][-1]
+         imu_data = input_data['imu'][1]
++        theta = input_data['imu'][1][-1]
+ 
+         accel_x = imu_data[0]
+         accel_y = imu_data[1]
+@@ -211,7 +212,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
+                 'gps': gps,
+                 'speed': speed,
+                 'compass': compass,
+-                'acceleration': acceleration
++                'acceleration': acceleration,
++                'theta': theta
+                 }
+ 
+         if (self.backbone != 'latentTF'):
+@@ -282,6 +284,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
+ 
+         # prepare velocity input
+         gt_velocity = torch.FloatTensor([tick_data['speed']]).to('cuda', dtype=torch.float32) # used by controller
++        
+         velocity = gt_velocity.reshape(1, 1) # used by transfuser
+ 
+         acceleration = tick_data['acceleration']
+@@ -303,6 +306,13 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
+             for i in range(self.model_count):
+                 rotated_bb = []
+                 if (self.backbone == 'transFuser'):
++                    pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point=target_point,
++                           target_point_image=target_point_image,
++                           ego_vel=velocity, 
++                           ego_acc=acceleration, 
++                           theta = tick_data['theta'], 
++                           save_path=self.vis_save_path, 
++                           num_points=num_points)
+                     pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
+                                                           num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,
+                                                           forced_move=is_stuck, debug=self.config.debug, rgb_back=self.rgb_back)
+@@ -326,7 +336,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
+ 
+                 pred_wps.append(pred_wp)
+                 bounding_boxes.append(rotated_bb)
+-        return 
++     
+ 
+         bbs_vehicle_coordinate_system = self.non_maximum_suppression(bounding_boxes, self.iou_treshold_nms)
+ 
+diff --git a/team_code_transfuser/train.py b/team_code_transfuser/train.py
+index 20701ac..da35c49 100644
+--- a/team_code_transfuser/train.py
++++ b/team_code_transfuser/train.py
+@@ -21,25 +21,36 @@ import random
+ from torch.distributed.optim import ZeroRedundancyOptimizer
+ import torch.multiprocessing as mp
+ 
++import wandb as wdb
++
+ from diskcache import Cache
+ # Records error and tracebacks in case of failure
++
+ @record
+ def main():
+-    print("type shit")
++    wandb = wdb.init(project="tfuse")
+     torch.cuda.empty_cache()
+ 
+     parser = argparse.ArgumentParser()
+-    parser.add_argument('--id', type=str, default='transfuser', help='Unique experiment identifier.')
+-    parser.add_argument('--epochs', type=int, default=41, help='Number of train epochs.')
+-    parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate.')
+-    parser.add_argument('--batch_size', type=int, default=12, help='Batch size for one GPU. When training with multiple GPUs the effective batch size will be batch_size*num_gpus')
+-    parser.add_argument('--logdir', type=str, default='log', help='Directory to log data to.')
+-    parser.add_argument('--load_file', type=str, default=None, help='ckpt to load.')
+-    parser.add_argument('--start_epoch', type=int, default=0, help='Epoch to start with. Useful when continuing trainings via load_file.')
++    parser.add_argument('--id', type=str, default='transfuser',
++                        help='Unique experiment identifier.')
++    parser.add_argument('--epochs', type=int, default=41,
++                        help='Number of train epochs.')
++    parser.add_argument('--lr', type=float, default=1e-4,
++                        help='Learning rate.')
++    parser.add_argument('--batch_size', type=int, default=12,
++                        help='Batch size for one GPU. When training with multiple GPUs the effective batch size will be batch_size*num_gpus')
++    parser.add_argument('--logdir', type=str, default='log',
++                        help='Directory to log data to.')
++    parser.add_argument('--load_file', type=str,
++                        default=None, help='ckpt to load.')
++    parser.add_argument('--start_epoch', type=int, default=0,
++                        help='Epoch to start with. Useful when continuing trainings via load_file.')
+     parser.add_argument('--setting', type=str, default='all', help='What training setting to use. Options: '
+                                                                    'all: Train on all towns no validation data. '
+                                                                    '02_05_withheld: Do not train on Town 02 and Town 05. Use the data as validation data.')
+-    parser.add_argument('--root_dir', type=str, default=r'/mnt/qb/geiger/kchitta31/datasets/carla/pami_v1_dataset_23_11', help='Root directory of your training data')
++    parser.add_argument('--root_dir', type=str, default=r'./results',
++                        help='Root directory of your training data')
+     parser.add_argument('--schedule', type=int, default=1,
+                         help='Whether to train with a learning rate schedule. 1 = True')
+     parser.add_argument('--schedule_reduce_epoch_01', type=int, default=30,
+@@ -54,7 +65,8 @@ def main():
+                         help='Which architecture to use for the lidar branch. Tested: efficientnet_b0, resnet34, regnety_032 etc.')
+     parser.add_argument('--use_velocity', type=int, default=0,
+                         help='Whether to use the velocity input. Currently only works with the TransFuser backbone. Expected values are 0:False, 1:True')
+-    parser.add_argument('--n_layer', type=int, default=4, help='Number of transformer layers used in the transfuser')
++    parser.add_argument('--n_layer', type=int, default=4,
++                        help='Number of transformer layers used in the transfuser')
+     parser.add_argument('--wp_only', type=int, default=0,
+                         help='Valid values are 0, 1. 1 = using only the wp loss; 0= using all losses')
+     parser.add_argument('--use_target_point_image', type=int, default=1,
+@@ -64,18 +76,22 @@ def main():
+     parser.add_argument('--parallel_training', type=int, default=1,
+                         help='If this is true/1 you need to launch the train.py script with CUDA_VISIBLE_DEVICES=0,1 torchrun --nnodes=1 --nproc_per_node=2 --max_restarts=0 --rdzv_id=123456780 --rdzv_backend=c10d train.py '
+                              ' the code will be parallelized across GPUs. If set to false/0, you launch the script with python train.py and only 1 GPU will be used.')
+-    parser.add_argument('--val_every', type=int, default=5, help='At which epoch frequency to validate.')
+-    parser.add_argument('--no_bev_loss', type=int, default=0, help='If set to true the BEV loss will not be trained. 0: Train normally, 1: set training weight for BEV to 0')
+-    parser.add_argument('--sync_batch_norm', type=int, default=0, help='0: Compute batch norm for each GPU independently, 1: Synchronize Batch norms accross GPUs. Only use with --parallel_training 1')
+-    parser.add_argument('--zero_redundancy_optimizer', type=int, default=0, help='0: Normal AdamW Optimizer, 1: Use Zero Reduncdancy Optimizer to reduce memory footprint. Only use with --parallel_training 1')
+-    parser.add_argument('--use_disk_cache', type=int, default=0, help='0: Do not cache the dataset 1: Cache the dataset on the disk pointed to by the SCRATCH enironment variable. Useful if the dataset is stored on slow HDDs and can be temporarily stored on faster SSD storage.')
+-
++    parser.add_argument('--val_every', type=int, default=5,
++                        help='At which epoch frequency to validate.')
++    parser.add_argument('--no_bev_loss', type=int, default=0,
++                        help='If set to true the BEV loss will not be trained. 0: Train normally, 1: set training weight for BEV to 0')
++    parser.add_argument('--sync_batch_norm', type=int, default=0,
++                        help='0: Compute batch norm for each GPU independently, 1: Synchronize Batch norms accross GPUs. Only use with --parallel_training 1')
++    parser.add_argument('--zero_redundancy_optimizer', type=int, default=0,
++                        help='0: Normal AdamW Optimizer, 1: Use Zero Reduncdancy Optimizer to reduce memory footprint. Only use with --parallel_training 1')
++    parser.add_argument('--use_disk_cache', type=int, default=0,
++                        help='0: Do not cache the dataset 1: Cache the dataset on the disk pointed to by the SCRATCH enironment variable. Useful if the dataset is stored on slow HDDs and can be temporarily stored on faster SSD storage.')
+ 
+     args = parser.parse_args()
+     args.logdir = os.path.join(args.logdir, args.id)
+     parallel = bool(args.parallel_training)
+ 
+-    if(bool(args.use_disk_cache) == True):
++    if (bool(args.use_disk_cache) == True):
+         if (parallel == True):
+             # NOTE: This is specific to our cluster setup where the data is stored on slow storage.
+             # During training we cache the dataset on the fast storage of the local compute nodes.
+@@ -85,35 +101,38 @@ def main():
+             print("Tmp folder for dataset cache: ", tmp_folder)
+             tmp_folder = tmp_folder + "/dataset_cache"
+             # We use a local diskcache to cache the dataset on the faster SSD drives on our cluster.
+-            shared_dict = Cache(directory=tmp_folder ,size_limit=int(768 * 1024 ** 3))
++            shared_dict = Cache(directory=tmp_folder,
++                                size_limit=int(768 * 1024 ** 3))
+         else:
+             shared_dict = Cache(size_limit=int(768 * 1024 ** 3))
+     else:
+         shared_dict = None
+ 
+     # Use torchrun for starting because it has proper error handling. Local rank will be set automatically
+-    if(parallel == True): #Non distributed works better with my local debugger
+-        rank       = int(os.environ["RANK"]) #Rank accross all processes
+-        local_rank = int(os.environ["LOCAL_RANK"]) # Rank on Node
+-        world_size = int(os.environ['WORLD_SIZE']) # Number of processes
+-        print(f"RANK, LOCAL_RANK and WORLD_SIZE in environ: {rank}/{local_rank}/{world_size}")
++    if (parallel == True):  # Non distributed works better with my local debugger
++        rank = int(os.environ["RANK"])  # Rank accross all processes
++        local_rank = int(os.environ["LOCAL_RANK"])  # Rank on Node
++        world_size = int(os.environ['WORLD_SIZE'])  # Number of processes
++        print(
++            f"RANK, LOCAL_RANK and WORLD_SIZE in environ: {rank}/{local_rank}/{world_size}")
+ 
+         device = torch.device('cuda:{}'.format(local_rank))
+-        os.environ["CUDA_VISIBLE_DEVICES"] = str(local_rank) # Hide devices that are not used by this process
++        # Hide devices that are not used by this process
++        os.environ["CUDA_VISIBLE_DEVICES"] = str(local_rank)
+ 
+         torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size, rank=rank,
+                                              timeout=datetime.timedelta(minutes=15))
+ 
+         torch.distributed.barrier(device_ids=[local_rank])
+     else:
+-        rank       = 0
++        rank = 0
+         local_rank = 0
+         world_size = 1
+         device = torch.device('cuda:{}'.format(local_rank))
+ 
+     torch.cuda.set_device(device)
+ 
+-    torch.backends.cudnn.benchmark = True # Wen want the highest performance
++    torch.backends.cudnn.benchmark = True  # Wen want the highest performance
+ 
+     # Configure config
+     config = GlobalConfig(root_dir=args.root_dir, setting=args.setting)
+@@ -121,47 +140,87 @@ def main():
+     config.n_layer = args.n_layer
+     config.use_point_pillars = bool(args.use_point_pillars)
+     config.backbone = args.backbone
+-    if(bool(args.no_bev_loss)):
++    if (bool(args.no_bev_loss)):
+         index_bev = config.detailed_losses.index("loss_bev")
+         config.detailed_losses_weights[index_bev] = 0.0
+ 
++    wdb_config = {
++        "lr": config.lr,
++        "epochs": args.epochs,
++        "batch_size": args.batch_size
++    }
++    wdb_log = {
++        "img_vert_anchors": config.img_vert_anchors,
++        "img_horz_anchors": config.img_horz_anchors,
++        "lidar_vert_anchors": config.lidar_vert_anchors,
++        "lidar_horz_anchors": config.lidar_horz_anchors,
++        "img_anchors": config.img_anchors,
++        "lidar_anchors": config.lidar_anchors,
++        "n_embd": config.n_embd,
++        "block_exp": config.block_exp,
++        "n_layer": config.n_layer,
++        "n_head": config.n_head,
++        "n_scale": config.n_scale,
++        "embd_pdrop": config.embd_pdrop,
++        "resid_pdrop": config.resid_pdrop,
++        "attn_pdrop": config.attn_pdrop,
++        "gpt_linear_layer_init_mean": config.gpt_linear_layer_init_mean,
++        "gpt_linear_layer_init_std": config.gpt_linear_layer_init_std,
++        "gpt_layer_norm_init_weight": config.gpt_layer_norm_init_weight
++    }
++
++    wandb.config.update(wdb_config)
++
++
+     # Create model and optimizers
+-    model = LidarCenterNet(config, device, args.backbone, backbone_path='diffusiondrive', image_architecture=args.image_architecture, lidar_architecture=args.lidar_architecture, use_velocity=bool(args.use_velocity))
+-    
++    model = LidarCenterNet(config, device, args.backbone, backbone_path='diffusiondrive', image_architecture=args.image_architecture,
++                           lidar_architecture=args.lidar_architecture, use_velocity=bool(args.use_velocity))
++
+     if (parallel == True):
+         # Synchronizing the Batch Norms increases the Batch size with which they are compute by *num_gpus
+-        if(bool(args.sync_batch_norm) == True):
++        if (bool(args.sync_batch_norm) == True):
+             model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank, broadcast_buffers=False, find_unused_parameters=False)
++        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[
++                                                          local_rank], output_device=local_rank, broadcast_buffers=False, find_unused_parameters=False)
+ 
+     model.cuda(device=device)
+ 
+     if ((bool(args.zero_redundancy_optimizer) == True) and (parallel == True)):
+ 
+-        optimizer = ZeroRedundancyOptimizer(model.parameters(), optimizer_class=optim.AdamW, lr=args.lr) # Saves GPU memory during DDP training
++        optimizer = ZeroRedundancyOptimizer(model.parameters(
++        ), optimizer_class=optim.AdamW, lr=args.lr)  # Saves GPU memory during DDP training
+     else:
+-        optimizer = optim.AdamW(model.parameters(), lr=args.lr) # For single GPU training
+-
++        # For single GPU training
++        optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+ 
+     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+     params = sum([np.prod(p.size()) for p in model_parameters])
+-    print ('Total trainable parameters: ', params)
++    print('Total trainable parameters: ', params)
+ 
+     # Data
+-    train_set = CARLA_Data(root=config.train_data, config=config, shared_dict=shared_dict)
+-    val_set   = CARLA_Data(root=config.val_data,   config=config, shared_dict=shared_dict)
++    print("Create data")
++    train_set = CARLA_Data(root=config.train_data,
++                           config=config, shared_dict=shared_dict)
++    val_set = CARLA_Data(root=config.val_data,
++                         config=config, shared_dict=shared_dict)
+ 
+     g_cuda = torch.Generator(device='cpu')
+     g_cuda.manual_seed(torch.initial_seed())
+ 
+-    if(parallel == True):
+-        sampler_train = torch.utils.data.distributed.DistributedSampler(train_set, shuffle=True, num_replicas=world_size, rank=rank)
+-        sampler_val   = torch.utils.data.distributed.DistributedSampler(val_set,   shuffle=True, num_replicas=world_size, rank=rank)
+-        dataloader_train = DataLoader(train_set, sampler=sampler_train, batch_size=args.batch_size, worker_init_fn=seed_worker, generator=g_cuda, num_workers=8, pin_memory=True)
+-        dataloader_val   = DataLoader(val_set,   sampler=sampler_val,   batch_size=args.batch_size, worker_init_fn=seed_worker, generator=g_cuda, num_workers=8, pin_memory=True)
++    if (parallel == True):
++        sampler_train = torch.utils.data.distributed.DistributedSampler(
++            train_set, shuffle=True, num_replicas=world_size, rank=rank)
++        sampler_val = torch.utils.data.distributed.DistributedSampler(
++            val_set,   shuffle=True, num_replicas=world_size, rank=rank)
++        dataloader_train = DataLoader(train_set, sampler=sampler_train, batch_size=args.batch_size,
++                                      worker_init_fn=seed_worker, generator=g_cuda, num_workers=8, pin_memory=True)
++        dataloader_val = DataLoader(val_set,   sampler=sampler_val,   batch_size=args.batch_size,
++                                    worker_init_fn=seed_worker, generator=g_cuda, num_workers=8, pin_memory=True)
+     else:
+-      dataloader_train = DataLoader(train_set, shuffle=True, batch_size=args.batch_size, worker_init_fn=seed_worker, generator=g_cuda, num_workers=0, pin_memory=True)
+-      dataloader_val   = DataLoader(val_set,   shuffle=True, batch_size=args.batch_size, worker_init_fn=seed_worker, generator=g_cuda, num_workers=0, pin_memory=True)
++        dataloader_train = DataLoader(train_set, shuffle=True, batch_size=args.batch_size,
++                                      worker_init_fn=seed_worker, generator=g_cuda, num_workers=0, pin_memory=True)
++        dataloader_val = DataLoader(val_set,   shuffle=True, batch_size=args.batch_size,
++                                    worker_init_fn=seed_worker, generator=g_cuda, num_workers=0, pin_memory=True)
+ 
+     # Create logdir
+     if ((not os.path.isdir(args.logdir)) and (rank == 0)):
+@@ -169,7 +228,7 @@ def main():
+         os.makedirs(args.logdir, exist_ok=True)
+ 
+     # We only need one process to log the losses
+-    if(rank == 0):
++    if (rank == 0):
+         writer = SummaryWriter(log_dir=args.logdir)
+         # Log args
+         with open(os.path.join(args.logdir, 'args.txt'), 'w') as f:
+@@ -183,40 +242,41 @@ def main():
+         model.load_state_dict(torch.load(args.load_file, map_location=model.device))
+         optimizer.load_state_dict(torch.load(args.load_file.replace("model_", "optimizer_"), map_location=model.device))
+ 
+-
+     trainer = Engine(model=model, optimizer=optimizer, dataloader_train=dataloader_train, dataloader_val=dataloader_val,
+-                     args=args, config=config, writer=writer, device=device, rank=rank, world_size=world_size,
++                     args=args, config=config, writer=writer, wandb_instance=wandb, device=device, rank=rank, world_size=world_size,
+                      parallel=parallel, cur_epoch=args.start_epoch)
+ 
+     for epoch in range(trainer.cur_epoch, args.epochs):
+-        if(parallel == True):
++        if (parallel == True):
+             # Update the seed depending on the epoch so that the distributed sampler will use different shuffles across different epochs
+             sampler_train.set_epoch(epoch)
+-        if ((epoch == args.schedule_reduce_epoch_01) or (epoch==args.schedule_reduce_epoch_02)) and (args.schedule == 1):
++        if ((epoch == args.schedule_reduce_epoch_01) or (epoch == args.schedule_reduce_epoch_02)) and (args.schedule == 1):
+             current_lr = optimizer.param_groups[0]['lr']
+             new_lr = current_lr * 0.1
+             print("Reduce learning rate by factor 10 to:", new_lr)
+             for g in optimizer.param_groups:
+                 g['lr'] = new_lr
+-        trainer.train()
++        trainer.train(epoch)
+ 
+-        if((args.setting != 'all') and (epoch % args.val_every == 0)):
+-            trainer.validate()
++        if ((args.setting != 'all') and (epoch % args.val_every == 0)):
++            trainer.validate(epoch)
+ 
+         if (parallel == True):
+             if (bool(args.zero_redundancy_optimizer) == True):
+-                optimizer.consolidate_state_dict(0) # To save the whole optimizer we need to gather it on GPU 0.
++                # To save the whole optimizer we need to gather it on GPU 0.
++                optimizer.consolidate_state_dict(0)
+             if (rank == 0):
+                 trainer.save()
+         else:
+             trainer.save()
+ 
++
+ class Engine(object):
+     """
+     Engine that runs training.
+     """
+ 
+-    def __init__(self, model, optimizer, dataloader_train, dataloader_val, args, config, writer, device, rank=0, world_size=1, parallel=False, cur_epoch=0):
++    def __init__(self, model, optimizer, dataloader_train, dataloader_val, args, config, writer, device, wandb_instance, rank=0, world_size=1, parallel=False, cur_epoch=0):
+         self.cur_epoch = cur_epoch
+         self.bestval_epoch = cur_epoch
+         self.train_loss = []
+@@ -225,7 +285,7 @@ class Engine(object):
+         self.model = model
+         self.optimizer = optimizer
+         self.dataloader_train = dataloader_train
+-        self.dataloader_val   = dataloader_val
++        self.dataloader_val = dataloader_val
+         self.args = args
+         self.config = config
+         self.writer = writer
+@@ -234,22 +294,26 @@ class Engine(object):
+         self.world_size = world_size
+         self.parallel = parallel
+         self.vis_save_path = self.args.logdir + r'/visualizations'
+-        if(self.config.debug == True):
++        self.wandb = wandb_instance
++        if (self.config.debug == True):
+             pathlib.Path(self.vis_save_path).mkdir(parents=True, exist_ok=True)
+ 
+-        self.detailed_losses         = config.detailed_losses
++        self.detailed_losses = config.detailed_losses
+         if self.args.wp_only:
+-            detailed_losses_weights = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
++            detailed_losses_weights = [1.0, 0.0, 0.0,
++                                       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+         else:
+             detailed_losses_weights = config.detailed_losses_weights
+-        self.detailed_weights = {key: detailed_losses_weights[idx] for idx, key in enumerate(self.detailed_losses)}
++        self.detailed_weights = {
++            key: detailed_losses_weights[idx] for idx, key in enumerate(self.detailed_losses)}
+ 
+     def load_data_compute_loss(self, data):
+         # Move data to GPU
+         rgb = data['rgb'].to(self.device, dtype=torch.float32)
+         if self.config.multitask:
+             depth = data['depth'].to(self.device, dtype=torch.float32)
+-            semantic = data['semantic'].squeeze(1).to(self.device, dtype=torch.long)
++            semantic = data['semantic'].squeeze(
++                1).to(self.device, dtype=torch.long)
+         else:
+             depth = None
+             semantic = None
+@@ -264,17 +328,20 @@ class Engine(object):
+             num_points = None
+ 
+         label = data['label'].to(self.device, dtype=torch.float32)
+-        ego_waypoint = data['ego_waypoint'].to(self.device, dtype=torch.float32)
++        ego_waypoint = data['ego_waypoint'].to(
++            self.device, dtype=torch.float32)
+ 
+-        target_point = data['target_point'].to(self.device, dtype=torch.float32)
+-        target_point_image = data['target_point_image'].to(self.device, dtype=torch.float32)
++        target_point = data['target_point'].to(
++            self.device, dtype=torch.float32)
++        target_point_image = data['target_point_image'].to(
++            self.device, dtype=torch.float32)
+ 
+         ego_vel = data['speed'].to(self.device, dtype=torch.float32)
+ 
+-    
+-        collected_waypoint = data['collected_waypoint'].to(self.device,dtype=torch.float32)
++        collected_waypoint = data['collected_waypoint'].to(
++            self.device, dtype=torch.float32)
+ 
+-        print(collected_waypoint)    
++        # print(collected_waypoint)
+         if ((self.args.backbone == 'transFuser') or (self.args.backbone == 'late_fusion') or (self.args.backbone == 'latentTF')):
+             if False:
+                 # losses = self.model.forward_ego(rgb, lidar, target_point=target_point,
+@@ -283,103 +350,100 @@ class Engine(object):
+                 #             label=label, save_path=self.vis_save_path,
+                 #             depth=depth, semantic=semantic, num_points=num_points)
+                 losses = self.model.forward_ego(rgb, lidar, target_point=target_point,
+-                           target_point_image=target_point_image,
+-                           ego_vel=ego_vel.reshape(-1, 1), ego_acc=data['acceleration'], theta = data['theta'], save_path=self.vis_save_path, num_points=num_points)
++                                                target_point_image=target_point_image,
++                                                ego_vel=ego_vel.reshape(-1, 1), ego_acc=data['acceleration'], theta=data['theta'], save_path=self.vis_save_path, num_points=num_points)
+             else:
+-                print("EGO WAYPOINT")
+-                print(ego_waypoint)
+-
+-                print(ego_waypoint.shape)
+-
+-
+-                print("Collected_waypoint")
+-                print(collected_waypoint.shape)
+-            
+-                losses = self.model( 
+-                    rgb=rgb, 
+-                    lidar_bev=lidar, 
+-                    ego_waypoint=collected_waypoint, 
+-                    target_point=target_point, 
+-                    ego_vel=ego_vel.reshape(-1, 1), 
+-                    ego_acc=data['acceleration'], 
+-                    theta = data['theta'], 
+-                    target_point_image=target_point_image, 
+-                    bev=bev, label=label, 
+-                    depth=depth, 
+-                    semantic=semantic, 
++                # print("EGO WAYPOINT")
++                # print(ego_waypoint)
++
++                # print(ego_waypoint.shape)
++
++                # print("Collected_waypoint")
++                # print(collected_waypoint.shape)
++
++                losses , pred_wp = self.model(
++                    rgb=rgb,
++                    lidar_bev=lidar,
++                    ego_waypoint=collected_waypoint,
++                    target_point=target_point,
++                    ego_vel=ego_vel.reshape(-1, 1),
++                    ego_acc=data['acceleration'],
++                    theta=data['theta'],
++                    target_point_image=target_point_image,
++                    bev=bev, label=label,
++                    depth=depth,
++                    semantic=semantic,
+                     num_points=num_points)
+         elif (self.args.backbone == 'geometric_fusion'):
+ 
+-            bev_points = data['bev_points'].long().to('cuda', dtype=torch.int64)
+-            cam_points = data['cam_points'].long().to('cuda', dtype=torch.int64)
++            bev_points = data['bev_points'].long().to(
++                'cuda', dtype=torch.int64)
++            cam_points = data['cam_points'].long().to(
++                'cuda', dtype=torch.int64)
+             losses = self.model(rgb, lidar, ego_waypoint=ego_waypoint, target_point=target_point,
+-                           target_point_image=target_point_image,
+-                           ego_vel=ego_vel.reshape(-1, 1), bev=bev,
+-                           label=label, save_path=self.vis_save_path,
+-                           depth=depth, semantic=semantic, num_points=num_points,
+-                           bev_points=bev_points, cam_points=cam_points)
++                                target_point_image=target_point_image,
++                                ego_vel=ego_vel.reshape(-1, 1), bev=bev,
++                                label=label, save_path=self.vis_save_path,
++                                depth=depth, semantic=semantic, num_points=num_points,
++                                bev_points=bev_points, cam_points=cam_points)
+         else:
+             raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
+ 
+-        return losses
++        return losses, pred_wp
+ 
+-
+-    def train(self):
++    def train(self,epoch):
+         self.model.train()
+-        
++
+         num_batches = 0
+         loss_epoch = 0.0
+-        detailed_losses_epoch  = {key: 0.0 for key in self.detailed_losses}
++        detailed_losses_epoch = {key: 0.0 for key in self.detailed_losses}
+         self.cur_epoch += 1
+ 
+         # Train loop
+         for data in tqdm(self.dataloader_train):
+-            
++
+             self.optimizer.zero_grad(set_to_none=True)
+-            losses = self.load_data_compute_loss(data)
++            losses , pred_wp = self.load_data_compute_loss(data)
+             loss = torch.tensor(0.0).to(self.device, dtype=torch.float32)
+ 
+             for key, value in losses.items():
+                 loss += self.detailed_weights[key] * value
+-                detailed_losses_epoch[key] += float(self.detailed_weights[key] * value.item())
++                detailed_losses_epoch[key] += float(
++                    self.detailed_weights[key] * value.item())
+             loss.backward()
+-    
+ 
+-    
+             self.optimizer.step()
+             num_batches += 1
+             loss_epoch += float(loss.item())
+-           
+-
+-        self.log_losses(loss_epoch, detailed_losses_epoch, num_batches, '')
+ 
++        self.log_losses(loss_epoch, detailed_losses_epoch, num_batches, pred_wp,epoch, '')
+ 
+-
+-    @torch.inference_mode() # Faster version of torch_no_grad
+-    def validate(self):
++    @torch.inference_mode()  # Faster version of torch_no_grad
++    def validate(self,epoch):
+         self.model.eval()
+ 
+         num_batches = 0
+         loss_epoch = 0.0
+-        detailed_val_losses_epoch  = {key: 0.0 for key in self.detailed_losses}
++        detailed_val_losses_epoch = {key: 0.0 for key in self.detailed_losses}
+ 
+         # Evaluation loop loop
+         for data in tqdm(self.dataloader_val):
+-            losses = self.load_data_compute_loss(data)
++            losses, pred_wp = self.load_data_compute_loss(data)
+ 
+             loss = torch.tensor(0.0).to(self.device, dtype=torch.float32)
+ 
+             for key, value in losses.items():
+                 loss += self.detailed_weights[key] * value
+-                detailed_val_losses_epoch[key] += float(self.detailed_weights[key] * value.item())
++                detailed_val_losses_epoch[key] += float(
++                    self.detailed_weights[key] * value.item())
+ 
+             num_batches += 1
+             loss_epoch += float(loss.item())
+ 
+-        self.log_losses(loss_epoch, detailed_val_losses_epoch, num_batches, 'val_')
+-        
+-        
+-    def log_losses(self, loss_epoch, detailed_losses_epoch, num_batches, prefix=''):
++        self.log_losses(loss_epoch, detailed_val_losses_epoch,
++                        num_batches, pred_wp, epoch, 'val_')
++
++    def log_losses(self, loss_epoch, detailed_losses_epoch, num_batches, pred_wp, epoch,prefix=''):
+         # Average all the batches into one number
+         loss_epoch = loss_epoch / num_batches
+         for key, value in detailed_losses_epoch.items():
+@@ -392,19 +456,24 @@ class Engine(object):
+ 
+         if (self.parallel == True):
+             torch.distributed.gather_object(obj=detailed_losses_epoch,
+-                                            object_gather_list=gathered_detailed_losses if self.rank == 0 else None, 
++                                            object_gather_list=gathered_detailed_losses if self.rank == 0 else None,
+                                             dst=0)
+-            torch.distributed.gather_object(obj=loss_epoch, 
++            torch.distributed.gather_object(obj=loss_epoch,
+                                             object_gather_list=gathered_loss if self.rank == 0 else None,
+                                             dst=0)
+         else:
+             gathered_detailed_losses[0] = detailed_losses_epoch
+             gathered_loss[0] = loss_epoch
+-            
++
++
++
++        self.wandb.log({"epoch": epoch, "gathered_loss": gathered_loss, "gathered_detailed_losses": gathered_detailed_losses, 'pred_wp':pred_wp})
++
+         if (self.rank == 0):
+             # Log main loss
+             aggregated_total_loss = sum(gathered_loss) / len(gathered_loss)
+-            self.writer.add_scalar(prefix + 'loss_total', aggregated_total_loss, self.cur_epoch)
++            self.writer.add_scalar(prefix + 'loss_total',
++                                   aggregated_total_loss, self.cur_epoch)
+ 
+             # Log detailed losses
+             for key, value in detailed_losses_epoch.items():
+@@ -414,7 +483,9 @@ class Engine(object):
+ 
+                 aggregated_value = aggregated_value / self.world_size
+ 
+-                self.writer.add_scalar(prefix + key, aggregated_value, self.cur_epoch)
++                self.writer.add_scalar(
++                    prefix + key, aggregated_value, self.cur_epoch)
++        
+ 
+     def save(self):
+         # NOTE saving the model with torch.save(model.module.state_dict(), PATH) if parallel processing is used would be cleaner, we keep it for backwards compatibility
+@@ -422,6 +493,8 @@ class Engine(object):
+         torch.save(self.optimizer.state_dict(), os.path.join(self.args.logdir, 'optimizer_%d.pth' % self.cur_epoch))
+ 
+ # We need to seed the workers individually otherwise random processes in the dataloader return the same values across workers!
++
++
+ def seed_worker(worker_id):
+     # Torch initial seed is properly set across the different workers, we need to pass it to numpy and random.
+     worker_seed = (torch.initial_seed()) % 2**32
+@@ -442,4 +515,3 @@ if __name__ == "__main__":
+ 
+     print("Start method of multiprocessing:", mp.get_start_method())
+     main()
+-    print("fINHASDFINASDFADFNADWIFNOANOFN")
+\ No newline at end of file
+diff --git a/team_code_transfuser/utils.py b/team_code_transfuser/utils.py
+deleted file mode 100644
+index 4e65ddb..0000000
+--- a/team_code_transfuser/utils.py
++++ /dev/null
+@@ -1,49 +0,0 @@
+-import numpy as np
+-
+-def get_virtual_lidar_to_vehicle_transform():
+-    # This is a fake lidar coordinate
+-    T = np.eye(4)
+-    T[0, 3] = 1.3
+-    T[1, 3] = 0.0
+-    T[2, 3] = 2.5
+-    return T
+-        
+-def get_vehicle_to_virtual_lidar_transform():
+-    return np.linalg.inv(get_virtual_lidar_to_vehicle_transform())
+-
+-def get_lidar_to_vehicle_transform():
+-    rot = np.array([[0, 1, 0],
+-                    [-1, 0, 0],
+-                    [0, 0, 1]], dtype=np.float32)
+-    T = np.eye(4)
+-    T[:3, :3] = rot
+-
+-    T[0, 3] = 1.3
+-    T[1, 3] = 0.0
+-    T[2, 3] = 2.5
+-    return T
+-
+-def get_vehicle_to_lidar_transform():
+-    return np.linalg.inv(get_lidar_to_vehicle_transform())
+-
+-def get_lidar_to_bevimage_transform():
+-    # rot 
+-    T = np.array([[0, -1, 16],
+-                  [-1, 0, 32],
+-                  [0, 0, 1]], dtype=np.float32)
+-    # scale 
+-    T[:2, :] *= 8
+-
+-    return T
+-
+-def normalize_angle(x):
+-    x = x % (2 * np.pi)    # force in range [0, 2 pi)
+-    if x > np.pi:          # move to [-pi, pi)
+-        x -= 2 * np.pi
+-    return x
+-
+-def normalize_angle_degree(x):
+-    x = x % 360.0
+-    if (x > 180.0):
+-        x -= 360.0
+-    return x
+\ No newline at end of file

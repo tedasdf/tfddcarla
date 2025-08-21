@@ -1,5 +1,5 @@
-export CARLA_ROOT=${1:-/home/fypits25/Documents/CARLA_0.9.10.1}
-export WORK_DIR=${2:-/home/fypits25/Documents/transfuser}
+export CARLA_ROOT=${1:-/home/fypits25/Documents/tfddcarla/carla}
+export WORK_DIR=${2:-/home/fypits25/Documents/tfddcarla}
 
 export CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh
 export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI
@@ -15,12 +15,12 @@ export REPETITIONS=1
 export CHALLENGE_TRACK_CODENAME=SENSORS
 export CHECKPOINT_ENDPOINT=${WORK_DIR}/results/transfuser_longest6.json
 export TEAM_AGENT=${WORK_DIR}/team_code_transfuser/submission_agent.py
-export TEAM_CONFIG=${WORK_DIR}/model_ckpt/transfuser
+export TEAM_CONFIG=/home/fypits25/Documents/tfddcarla/model_ckpt/models_2022/transfuser
 export DEBUG_CHALLENGE=0
 export RESUME=1
 export DATAGEN=0
 
-python3 ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \
+python3 ${WORK_DIR}/leaderboard/leaderboard/leaderboard_evaluator_local.py \
 --scenarios=${SCENARIOS}  \
 --routes=${ROUTES} \
 --repetitions=${REPETITIONS} \
