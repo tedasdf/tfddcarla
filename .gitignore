@@ -163,7 +163,7 @@ results/
 results_test/
 model_ckpt/
 data/
-
+wandb/
 temp_store/
 
 # Carla
@@ -172,3 +172,4 @@ carla/*
 old/*
 team_code_transfuser/logdir/transfuser
 team_code_transfuser/output_log.txt
+logdir/transfuser/*

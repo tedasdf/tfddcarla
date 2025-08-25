@@ -221,7 +221,7 @@ class GlobalConfig:
         if (setting == 'all'): # All towns used for training no validation data
             self.train_towns = os.listdir(self.root_dir)
             # print(self.train_towns)
-            self.val_towns = ['Town02_Scenario1_run1']
+            self.val_towns = ['Town01_Scenario1_run1'] 
             self.train_data, self.val_data = {}, {}
              
             for town in self.train_towns:

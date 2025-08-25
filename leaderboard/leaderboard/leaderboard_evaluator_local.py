@@ -94,7 +94,7 @@ class LeaderboardEvaluator(object):
         sys.path.insert(0, os.path.dirname(args.agent))
         
         self.module_agent = importlib.import_module(module_name)
-        print(self.module_agent)
+        # print(self.module_agent)
 
         # Create the ScenarioManager
         self.manager = ScenarioManager(args.timeout, args.debug > 1)
@@ -254,7 +254,7 @@ class LeaderboardEvaluator(object):
         """
         crash_message = ""
         entry_status = "Started"
-        print("ASDFASDFASDFA")
+        # print("ASDFASDFASDFA")
         print("\n\033[1m========= Preparing {} (repetition {}) =========".format(config.name, config.repetition_index))
         print("> Setting up the agent\033[0m")
 
@@ -404,14 +404,14 @@ class LeaderboardEvaluator(object):
             self.statistics_manager.resume(args.checkpoint)
         else:
             self.statistics_manager.clear_record(args.checkpoint)
-            print("ADSF")
+            # print("ADSF")
             route_indexer.save_state(args.checkpoint)
         
         while route_indexer.peek():
             print(route_indexer)
             # setup
             config = route_indexer.next()
-            print("HELO")
+            # print("HELO")
             # run
             self._load_and_run_scenario(args, config)
 

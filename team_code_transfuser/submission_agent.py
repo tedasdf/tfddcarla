@@ -311,7 +311,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                            ego_vel=velocity, 
                            ego_acc=acceleration, 
                            theta = tick_data['theta'], 
-                           save_path=self.vis_save_path, 
+                           save_path="./vispathtest", 
                            num_points=num_points)
                     pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
                                                           num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,

@@ -1,2 +1,5 @@
 Start method of multiprocessing: spawn
 wandb: Tracking run with wandb version 0.8.29
+
+wandb: Waiting for W&B process to finish, PID 30946
+wandb: Sending ctrl-c to W&B process, PID 30946. Press ctrl-c again to kill it.

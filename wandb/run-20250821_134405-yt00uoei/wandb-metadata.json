@@ -26,9 +26,10 @@
         "--parallel_training",
         "0"
     ],
-    "state": "running",
+    "state": "finished",
     "jobType": null,
     "mode": "run",
     "project": "tfuse",
-    "heartbeatAt": "2025-08-21T13:54:15.041619"
+    "heartbeatAt": "2025-08-22T08:50:27.761410",
+    "exitcode": 0
 }

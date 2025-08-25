@@ -38,6 +38,7 @@ PLAN_ANCHOR_PATH = '/data/ITS_2025/tfddcarla/kmeans_navsim_traj_20.npy'
 # custom imports
 import path_visualiser
 
+
 @HEADS.register_module()
 class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
     """Objects as Points Head. CenterHead use center_point to indicate object's
@@ -797,36 +798,16 @@ class LidarCenterNet(nn.Module):
 
         elif self.backbone_path == "diffusiondrive":
             features = transfuser_feature[1]
-            x_threshhold = 1  # what unit is this? TODO: CALCULATE A BETTER THRESHHOLD
-
-           
-            # TODO: Implement the diffusion drive path prediction here
-
-            # need target
-            # need status_feature
-            #
-           
             target_point = target_point.T.to('cuda')
-            # if target_point[0] >= x_threshhold:
-            #     driving_command = [0, 0, 1, 0]
-            # elif target_point[0] <= -x_threshhold:
-            #     driving_command = [1, 0, 0, 0]
-            # Only use the first two axes: X and Y
-            # xy = torch.stack(ego_acc[:2])  # shape: (2, 10)
-
-            # # Calculate 2D vector magnitudes (√(x² + y²))
-            # ego_acc = torch.linalg.norm(xy, dim=0)
-            # ego_acc = ego_acc.to(device='cuda')
-            # ego_acc = ego_acc.reshape(-1, 1)
-            x = ego_acc[0]  # shape [10]
-            y = ego_acc[1]  # shape [10]
-            acc_xy = torch.stack([x, y], dim=0)  # shape: [2, 10]
+            x = torch.tensor(ego_acc[0])  # shape [10]
+            y = torch.tensor(ego_acc[1])  # shape [10]
+            acc_xy = torch.stack([x, y], dim=0).unsqueeze(1)  # shape: [2, 10]
             acc_xy = acc_xy.to('cuda')
 
             # Flatten velocity and angle
             device = ego_vel.device  # assuming vel is already on CUDA
 
-            theta = theta.to(device)
+            theta = torch.tensor(theta).to(device)
 
             vel = ego_vel.view(-1)      # shape: [10]
             theta = theta.view(-1)      # shape: [10]
@@ -835,7 +816,10 @@ class LidarCenterNet(nn.Module):
             vx = vel * torch.cos(theta)
             vy = vel * torch.sin(theta)
             velocity_xy = torch.stack([vx, vy], dim=0)  # shape: [2, 10]
-     
+
+            print("target_point.shape\n", target_point.shape)
+            print("velocity_xy.shape\n", velocity_xy.shape)
+            print("acc_xy.shape\n", acc_xy.shape)
             # Combine into a single status_feature
             status_feature = torch.cat(
                 [
@@ -929,14 +913,14 @@ class LidarCenterNet(nn.Module):
         pred_depth = self.depth_decoder(image_features_grid)
         
         pred_wp = forward_pass["trajectory"][0][0]
-        path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
+        # path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
         # self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
                                 # pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
                                 # gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
         # TODO
-        # pred_wp = vlm(forward_pass["trajectory"], rgb)
+        pred_wp = vlm(forward_pass["trajectory"], rgb)
 
         return pred_wp, rotated_bboxes
 

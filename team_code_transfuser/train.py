@@ -468,8 +468,14 @@ class Engine(object):
             gathered_loss[0] = loss_epoch
 
 
+        # print(type(gathered_loss))
+        # print("gathered_loss\n",gathered_loss)
+        # print(type(gathered_detailed_losses))
+        # print("gathered_detailed_losses\n",gathered_detailed_losses)
+        # print(type(pred_wp))
+        # print("pred_wp\n",pred_wp)
 
-        self.wandb.log({"epoch": epoch, "gathered_loss": gathered_loss, "gathered_detailed_losses": gathered_detailed_losses, 'pred_wp':pred_wp})
+        self.wandb.log({"epoch": epoch, "gathered_loss": gathered_loss, "gathered_detailed_losses": gathered_detailed_losses, 'pred_wp':pred_wp.cpu()})
 
         if (self.rank == 0):
             # Log main loss
