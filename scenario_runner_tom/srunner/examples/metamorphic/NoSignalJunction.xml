@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<scenarios>
+    <scenario name="NoSignalJunctionCrossing_tesla" type="NoSignalJunctionCrossing" town="Town03">
+        <ego_vehicle x="-74.32" y="-50" z="0.5" yaw="270" model="vehicle.lincoln.mkz2017" />
+        <other_actor x="-105" y="-136" z="0.5" yaw="0" model="vehicle.tesla.model3" />
+    </scenario>
+    <scenario name="NoSignalJunctionCrossing_prius" type="NoSignalJunctionCrossing" town="Town03">
+        <ego_vehicle x="-74.32" y="-50" z="0.5" yaw="270" model="vehicle.lincoln.mkz2017" />
+        <other_actor x="-105" y="-136" z="0.5" yaw="0" model="vehicle.toyota.prius" />
+    </scenario>
+    <scenario name="NoSignalJunctionCrossing_storm" type="NoSignalJunctionCrossing" town="Town03">
+        <ego_vehicle x="-74.32" y="-50" z="0.5" yaw="270" model="vehicle.lincoln.mkz2017" />
+        <other_actor x="-105" y="-136" z="0.5" yaw="0" model="vehicle.tesla.model3" />
+        <weather cloudiness="100" precipitation="80" precipitation_deposits="100" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+</scenarios>

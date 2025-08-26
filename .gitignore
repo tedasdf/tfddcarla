@@ -164,7 +164,7 @@ result_json/*
 results_test/*
 model_ckpt/
 data/
-
+logdir/transfuser/
 temp_store/
 
 # Carla
