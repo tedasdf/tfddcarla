@@ -1,6 +1,6 @@
 #!/bin/bash
-WORK_DIR=${1:-/data/ITS_2025/tfddcarla}
-CARLA_ROOT=${2:-/data/ITS_2025/tfddcarla/carla}
+WORK_DIR=${1:-/home/fypits25/Documents/tfddcarla}
+CARLA_ROOT=${2:-/home/fypits25/Documents/tfddcarla/carla}
 TOTAL_REPS=${3:-1}  # how many times to loop through all scenarios
 echo "$WORK_DIR"
 CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh

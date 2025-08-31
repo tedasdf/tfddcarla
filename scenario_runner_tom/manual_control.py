@@ -199,9 +199,10 @@ def main():
     argparser.add_argument(
         '--res',
         metavar='WIDTHxHEIGHT',
-        default='1280x720',
-        help='window resolution (default: 1280x720)')
+        default='1700x900',
+        help='window resolution (default: 1700x900)')
     args = argparser.parse_args()
+    
 
     args.rolename = 'hero'      # Needed for CARLA version
     args.filter = "vehicle.*"   # Needed for CARLA version
