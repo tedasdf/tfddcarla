@@ -2,9 +2,9 @@ from base64 import b64encode
 from pydantic import BaseModel, Field
 from typing import List, Literal
 import requests
-import json
+# import json
 from io import BytesIO
-from traj_eval import TrajectoryScoring
+# from traj_eval import TrajectoryScoring
 
 URL = 'http://localhost:11434'
 COMPLETIONS = '/api/chat'
@@ -39,7 +39,7 @@ class q3(BaseModel):
 
 
 class VLM():
-    def __init__(self, model="llama3.2-vision"):
+    def __init__(self, model="llama3.2-vision:11b"):
         self.query = ["Provided a detailed description of a driving scene from a set of car surround images with 6 perspectives, capturing the critical elements such as time of day, weather conditions, road environment, and available lane options.",
                       "Please list and frame the key objectives in the front view that will influence the next driving decision",
                       "Based on the previous description, should we drive conservatively or aggressively? What level and what score should we use?"
@@ -59,7 +59,7 @@ class VLM():
 
         return response.json()
 
-    def step(self, combined_image, weights):
+    def step(self, weights, combined_image):
 
         responses = []
 
@@ -121,3 +121,24 @@ class VLM():
         #   print(f"Total Duration: {response.total_duration/10**9}s")
 
         return responses
+
+
+
+
+class WeightScore:
+    def __init__(self):
+        self.w_coll = 1.5
+        self.w_dev =  5.0
+        self.w_dis =  2.5
+        self.w_speed =  1.5
+        self.w_lat =  4.5
+        self.w_lon =  3.0
+        self.w_cent =  3.5
+        
+if __name__ == '__main__':
+    from PIL import Image
+    vlm = VLM()
+    image = Image.open("0000.png")
+    weights = WeightScore()
+    response = vlm.step(weights,image)
+    print(response)
