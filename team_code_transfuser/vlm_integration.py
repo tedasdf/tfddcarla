@@ -1,8 +1,8 @@
 from base64 import b64encode
 from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing_extensions import Literal
 import requests
-# import json
+import json
 from io import BytesIO
 # from traj_eval import TrajectoryScoring
 
@@ -11,17 +11,15 @@ COMPLETIONS = '/api/chat'
 
 
 class q1(BaseModel):
-    Time: str
-    Weather: str
-    Driving_Scenario: str
-    Lane_Option: str
-
+    Time: str = Field(..., description="Specify time of day in detail, e.g. '10:00 AM, mid-morning rush hour'")
+    Weather: str = Field(..., description="Describe the weather in full, e.g. 'Sunny with light clouds'")
+    Driving_Scenario: str = Field(..., description="Describe the road type and conditions, e.g. 'Highway with moderate traffic'")
+    Lane_Option: str = Field(..., description="Describe which lane is chosen and why, e.g. 'Left lane for overtaking slower cars'")
 
 class q2(BaseModel):
-    Traffic_Lights: str
-    Parked_Vehicles: str
-    Building_Proximity: str
-
+    Traffic_Lights: str = Field(..., description="Traffic light state, e.g. 'Red light with countdown timer visible'")
+    Parked_Vehicles: str = Field(..., description="Describe number and placement, e.g. '3 cars parked closely along right side'")
+    Building_Proximity: str = Field(..., description="Describe closeness of buildings, e.g. 'Shops immediately adjacent to roadside'")
 
 class q3(BaseModel):
     Driving_Style: Literal["Aggressive", "Conservative"]
@@ -45,8 +43,10 @@ class VLM():
                       "Based on the previous description, should we drive conservatively or aggressively? What level and what score should we use?"
                       ]
         self.model = model
+        self.messages = []
 
-    def chat_model(self, format, messages):
+    def chat_model(self,format, messages):
+
         payload = {"model": self.model,
                    "messages": messages,
                    "format": format,
@@ -56,22 +56,27 @@ class VLM():
         if response.status_code != 200:
             raise Exception("Error: Server responded with ",
                             response.status_code)
-
         return response.json()
 
-    def step(self, weights, combined_image):
+    def step(self, weights, combined_image): #weights, combined_image)
 
         responses = []
-
         buffered = BytesIO()
-        combined_image.save(buffered, format="JPEG")
+        combined_image.save(buffered, format="PNG")
         encoded_image = b64encode(buffered.getvalue()).decode("utf-8")
+
         # first message
-        messages = [
+        self.messages.extend(
+            [
             {
                 'role': 'system',
                 'content': f"""
-                You are a bot for defining the weights of the following metrics:
+
+                "You are an assistant that fills in JSON fields with descriptive and elaborated answers. 
+                For string fields like 'Driving_Scenario', 'Lane_Option', 'Parked_Vehicles', and 'Building_Proximity', 
+                always provide a detailed explanation instead of a short word. Example: instead of 'Highway', say 
+                'A three-lane highway with light traffic, smooth asphalt, and clear lane markings'."
+                and help defining the weights of the following metrics:
 
                 Safety Metrics:
                 Weight_Collision: a function that increases collision penalty as the vehicle gets closer to an obstacle, so near obstacles have much higher risk than far ones. Initial: {weights.w_coll:.2f}  
@@ -87,42 +92,34 @@ class VLM():
             },
             {'role': 'user',
                 'content': self.query[0],
-             'images': [encoded_image],
+                'images': [encoded_image],
              },
-        ]
-
-        response = self.chat_model(
-            format=q1.model_json_schema(), messages=messages)
+            ]
+        )
+        
+        response = self.chat_model(format=q1.model_json_schema(), messages=self.messages)
         message = response['message']
         print(message['content'])
-        messages.append(message)
+        self.messages.append(message)
         responses.append(response)
-        #   print(f"Total Duration: {response.total_duration/10**9}s")
+
         # second message
-
-        messages.append({'role': 'user', 'content': self.query[1]})
-
-        response = self.chat_model(
-            format=q2.model_json_schema(), messages=messages)
+        self.messages.append({'role': 'user', 'content': self.query[1]})
+        response = self.chat_model(format=q2.model_json_schema(), messages=self.messages)
         message = response['message']
         print(message['content'])
-        messages.append(message)
+        self.messages.append(message)
         responses.append(response)
-        #   print(f"Total Duration: {response.total_duration/10**9}s")
+      
         # third message
-        messages.append({'role': 'user', 'content': self.query[2]})
-
-        response = self.chat_model(
-            format=q3.model_json_schema(), messages=messages)
+        self.messages.append({'role': 'user', 'content': self.query[2]})
+        response = self.chat_model(format=q3.model_json_schema(), messages=self.messages)
         message = response['message']
         print(message['content'])
-        messages.append(message)
+        self.messages.append(message)
         responses.append(response)
-        #   print(f"Total Duration: {response.total_duration/10**9}s")
-
+   
         return responses
-
-
 
 
 class WeightScore:
@@ -134,11 +131,32 @@ class WeightScore:
         self.w_lat =  4.5
         self.w_lon =  3.0
         self.w_cent =  3.5
+
+    def update_weights(self, response):
+        raw_json = response[-1]["message"]["content"]
+        weights = json.loads(raw_json)
+        self.w_coll = weights["Weight_Collision"]
+        self.w_dev = weights["Weight_Deviation"]
+        self.w_dis = weights["Weight_Distance"]
+        self.w_speed = weights["Weight_Speed"]
+        self.w_lat = weights["Weight_Lat"]
+        self.w_lon = weights["Weight_Lon"]
+        self.w_cent = weights["Weight_Cent"]
         
 if __name__ == '__main__':
     from PIL import Image
+
     vlm = VLM()
-    image = Image.open("0000.png")
     weights = WeightScore()
-    response = vlm.step(weights,image)
-    print(response)
+
+    image = Image.open("./test_images/im1.png")
+    response = vlm.step(weights, image)
+    weights.update_weights(response)
+    # print(response)
+    # print("\n\n")
+    # image = Image.open("./test_images/im2.png")
+    # response = vlm.step(weights, image)
+    # weights.update_weights(response)
+    # print(response)
+    
+    

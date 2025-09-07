@@ -4,6 +4,7 @@ from copy import deepcopy
 
 import cv2
 import carla
+
 from PIL import Image
 from collections import deque
 
@@ -12,13 +13,19 @@ import numpy as np
 import math
 
 from leaderboard.autoagents import autonomous_agent
+# print("yeah allg brudda0")
 from model import LidarCenterNet
+# print("yeah allg brudda1")
 from config import GlobalConfig
+# print("yeah allg brudda2")
 from data import lidar_to_histogram_features, draw_target_point, lidar_bev_cam_correspondences
+# print("yeah allg brudda3")
 from shapely.geometry import Polygon
+# print("yeah allg brudda4")
 from vlm_integration import VLM
+# print("yeah allg brudda5")
 from traj_eval import TrajectoryScoring
-
+# print("yeah allg brudda6")
 
 import itertools
 import pathlib
@@ -66,6 +73,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             image_architecture = 'resnet34'
 
         if ('lidar_architecture' in self.args):
+            # print(f' Submission agent got {self.args["lidar_architecture"]}') ##################################
             lidar_architecture = self.args['lidar_architecture']
         else:
             lidar_architecture = 'resnet18'
@@ -82,7 +90,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         self.lidar_pos = self.config.lidar_pos  # x, y, z coordinates of the LiDAR position.
         self.iou_treshold_nms = self.config.iou_treshold_nms # Iou threshold used for Non Maximum suppression on the Bounding Box predictions.
 
-
+        # print(self.backbone, image_architecture, lidar_architecture)
         # Load model files
         self.nets = []
         self.model_count = 0 # Counts how many models are in our ensemble
@@ -90,7 +98,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             if file.endswith(".pth"):
                 self.model_count += 1
                 print(os.path.join(path_to_conf_file, file))
-                net = LidarCenterNet(self.config, 'cuda', self.backbone, image_architecture, lidar_architecture, use_velocity)
+                net = LidarCenterNet(self.config, 'cuda',self.backbone, "diffusiondrive", image_architecture, lidar_architecture, use_velocity)
                 if(self.config.sync_batch_norm == True):
                     net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net) # Model was trained with Sync. Batch Norm. Need to convert it otherwise parameters will load incorrectly.
                 state_dict = torch.load(os.path.join(path_to_conf_file, file), map_location='cuda:0')
@@ -109,6 +117,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         self.steer_damping = self.config.steer_damping
         self.rgb_back = None #For debugging
 
+        self.vis_save_path = "./vis_save_path"
 
     def _init(self):
         self._route_planner = RoutePlanner(self.config.route_planner_min_distance, self.config.route_planner_max_distance)
@@ -201,6 +210,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         speed = input_data['speed'][1]['speed']
         compass = input_data['imu'][1][-1]
         imu_data = input_data['imu'][1]
+        theta = input_data['imu'][1][-1]
+
 
         accel_x = imu_data[0]
         accel_y = imu_data[1]
@@ -214,7 +225,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                 'gps': gps,
                 'speed': speed,
                 'compass': compass,
-                'acceleration': acceleration
+                'acceleration': acceleration,
+                'theta' : theta
                 }
 
         if (self.backbone != 'latentTF'):
@@ -278,16 +290,19 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                 num_points = [torch.tensor(len(lidar_cloud)).to('cuda', dtype=torch.int32)]
             else:
                 lidar_bev = self.prepare_lidar(tick_data)
+
         
         # prepare goal location input
         target_point_image, target_point = self.prepare_goal_location(tick_data)
 
         # prepare velocity input
         gt_velocity = torch.FloatTensor([tick_data['speed']]).to('cuda', dtype=torch.float32) # used by controller
+        
         velocity = gt_velocity.reshape(1, 1) # used by transfuser
 
         acceleration = tick_data['acceleration']
-
+        theta =  tick_data['theta']
+        theta = torch.tensor(theta, dtype=torch.float32)
         # unblock
         is_stuck = False
         # divide by 2 because we process every second frame
@@ -298,16 +313,22 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             self.forced_move += 1
 
         # forward pass
-        model = self.config.model
         with torch.no_grad():
             pred_wps = []
             bounding_boxes = []
             for i in range(self.model_count):
                 rotated_bb = []
                 if (self.backbone == 'transFuser'):
-                    pred_wp, _ = self.nets[i].forward_ego(model, image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
-                                                          num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,
-                                                          forced_move=is_stuck, debug=self.config.debug, rgb_back=self.rgb_back)
+                    pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point=target_point,
+                           target_point_image=target_point_image,
+                           ego_vel=velocity, 
+                           ego_acc=  torch.from_numpy(np.array(acceleration)), 
+                           theta = theta, 
+                           save_path=self.vis_save_path, 
+                           num_points=num_points)
+                    # pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
+                    #                                       theta , num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,
+                    #                                       forced_move=is_stuck, debug=self.config.debug, rgb_back=self.rgb_back)
                 elif (self.backbone == 'late_fusion'):
                     pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, num_points=num_points)
                 elif (self.backbone == 'geometric_fusion'):
@@ -326,22 +347,17 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                 else:
                     raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
 
-                pred_wps.append(pred_wp)
+                pred_wps.extend(pred_wp)
                 bounding_boxes.append(rotated_bb)
-            pred_wps = diffusion(backbone_output)
-            vlm_responses = self.vlm.step(image)
-            self.trajscore.update_weights(vlm_responses)
-            scores: List = self.trajscore.compute_scores(pred_wp, target_point)
-            best_wp_idx = scores.index(max(scores))
-            best_wp = pred_wp[best_wp_idx]
-
-
-        return best_wp
+     
 
         bbs_vehicle_coordinate_system = self.non_maximum_suppression(bounding_boxes, self.iou_treshold_nms)
 
         self.bb_buffer.append(bbs_vehicle_coordinate_system)
-        self.pred_wp = torch.stack(pred_wps, dim=0).mean(dim=0) #Average the predictions from the ensembles
+        self.pred_wp = pred_wps
+
+        # self.pred_wp = torch.stack(pred_wps, dim=0).mean(dim=0) #Average the predictions from the ensembles
+        # self.pred_wp = vlm_function(pred_wps , ..... )
 
         # transform to local coordinates
         pred_wp_transformed = []

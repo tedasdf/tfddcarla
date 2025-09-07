@@ -166,10 +166,11 @@ model_ckpt/
 data/
 logdir/transfuser/
 temp_store/
-
+tomrepo/scenario_runner/*
 # Carla
 carla/*
-
+carla0915/*
+scenario_runner-0.9.15/*
 old/*
 team_code_transfuser/logdir/transfuser
 team_code_transfuser/output_log.txt

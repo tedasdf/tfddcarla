@@ -4,20 +4,32 @@ import torch.nn.functional as F
 import cv2
 import math
 
+
 from path_gen.og import GRUDecoder
+# print("cujnt 1")
 from path_gen.diffusiondrive.modules.blocks import linear_relu_ln
+# print("cujnt 2")
 from utils import *
+# print("cujnt 3")
 from transfuser import TransfuserBackbone, SegDecoder, DepthDecoder
+# print("cujnt 4")
 from geometric_fusion import GeometricFusionBackbone
+# print("cujnt 5")
 from late_fusion import LateFusionBackbone
+# print("cujnt 6")
 from latentTF import latentTFBackbone
+# print("cujnt 7")
 from copy import deepcopy
+# print("cujnt 8")
 from point_pillar import PointPillarNet
+# print("cujnt 9")
 import time
 
 from PIL import Image, ImageFont, ImageDraw
 from torchvision import models
 
+
+# Copyright (c) OpenMMLab. All rights reserved.
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn as nn
@@ -27,12 +39,12 @@ from mmcv.runner import force_fp32
 
 from mmdet.core import multi_apply
 from mmdet.models import HEADS, build_loss
-from mmdet.utils import gaussian_radius, gen_gaussian_target
-from mmdet.gaussian_target import (get_local_maximum, get_topk_from_heatmap,
-                                                transpose_and_gather_feat)
-from mmdet.base_dense_head import BaseDenseHead
-from mmdet.dense_test_mixins import BBoxTestMixin
-from mmdet.gaussian_focal_loss import GaussianFocalLoss
+from mmdet.models.utils import gaussian_radius, gen_gaussian_target
+from mmdet.models.utils.gaussian_target import (get_local_maximum, get_topk_from_heatmap,
+                                     transpose_and_gather_feat)
+from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
+from mmdet.models.dense_heads.dense_test_mixins import BBoxTestMixin
+
 
 # custom imports
 import path_visualiser
@@ -565,7 +577,7 @@ class LidarCenterNet(nn.Module):
     def __init__(self, config ,device, backbone, backbone_path, image_architecture='resnet34', lidar_architecture='resnet18', use_velocity=True):
         super().__init__()
         self._bev_downscale = nn.Conv2d(512, 256, kernel_size=1)
-        self._status_encoding = nn.Linear(4 + 2 + 2, 256)
+        self._status_encoding = nn.Linear(2 + 2 + 2, 256)
         self.device = device
         self.config = config
         self.pred_len = config.pred_len
@@ -609,6 +621,7 @@ class LidarCenterNet(nn.Module):
         )
 
         if (backbone == 'transFuser'):
+            # print(f'Model.py got {lidar_architecture}') ##############################
             self._model = TransfuserBackbone(
                 config, image_architecture, lidar_architecture, use_velocity=use_velocity).to(self.device)
         elif (backbone == 'late_fusion'):
@@ -667,7 +680,7 @@ class LidarCenterNet(nn.Module):
                 num_poses=8,
                 d_ffn=1024,
                 d_model=256,
-                plan_anchor_path="/data/ITS_2025/tfddcarla/kmeans_navsim_traj_20.npy",
+                plan_anchor_path="/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy",
                 config=config.path_config,
             )
 
@@ -757,7 +770,7 @@ class LidarCenterNet(nn.Module):
 
         return steer, throttle, brake
 
-    def forward_ego(self, model, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
+    def forward_ego(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
                     stuck_detector=0, forced_move=False, num_points=None, rgb_back=None, debug=False):
 
         if (self.use_point_pillars == True):
@@ -796,29 +809,10 @@ class LidarCenterNet(nn.Module):
 
         elif self.backbone_path == "diffusiondrive":
             features = transfuser_feature[1]
-            x_threshhold = 1  # what unit is this? TODO: CALCULATE A BETTER THRESHHOLD
+          
+            print(target_point.shape)
+            driving_command = target_point.T
 
-           
-            # TODO: Implement the diffusion drive path prediction here
-
-            # need target
-            # need status_feature
-            #
-           
-            driving_command = torch.tensor([0, 1, 0, 0], dtype=torch.float32, device='cuda')  # shape [4]
-            driving_command = driving_command.unsqueeze(1).repeat(1, 10)  # shape [4, 10]
-
-            # if target_point[0] >= x_threshhold:
-            #     driving_command = [0, 0, 1, 0]
-            # elif target_point[0] <= -x_threshhold:
-            #     driving_command = [1, 0, 0, 0]
-            # Only use the first two axes: X and Y
-            # xy = torch.stack(ego_acc[:2])  # shape: (2, 10)
-
-            # # Calculate 2D vector magnitudes (√(x² + y²))
-            # ego_acc = torch.linalg.norm(xy, dim=0)
-            # ego_acc = ego_acc.to(device='cuda')
-            # ego_acc = ego_acc.reshape(-1, 1)
             x = ego_acc[0]  # shape [10]
             y = ego_acc[1]  # shape [10]
             acc_xy = torch.stack([x, y], dim=0)  # shape: [2, 10]
@@ -836,7 +830,10 @@ class LidarCenterNet(nn.Module):
             vx = vel * torch.cos(theta)
             vy = vel * torch.sin(theta)
             velocity_xy = torch.stack([vx, vy], dim=0)  # shape: [2, 10]
-     
+
+            print(driving_command.shape)
+            print(velocity_xy.shape)
+            acc_xy = acc_xy.unsqueeze(1)
             # Combine into a single status_feature
             status_feature = torch.cat(
                 [
@@ -892,8 +889,11 @@ class LidarCenterNet(nn.Module):
 
             trajectory_query, agents_query = query_out.split(
                 self._query_splits, dim=1)
-           
+
+            # print("trajectory Query")
             # print(trajectory_query.shape)
+            
+            
             forward_pass = self.path_out(
                 trajectory_query,
                 agents_query,
@@ -903,6 +903,9 @@ class LidarCenterNet(nn.Module):
                 None,
                 None
             )  # {"trajectory": poses_reg}
+            # print(loss_dict.keys()) # pred output
+
+            
             # print("dawkodkawopdkwaodkawopkdawkdpoawkdop")
             
             # print(forward_pass["trajectory"].shape)
@@ -931,9 +934,9 @@ class LidarCenterNet(nn.Module):
         
         pred_wp = forward_pass["trajectory"][0][0]
         path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
-        # self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
-                                # pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
-                                # gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
+        self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
+                                pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+                                gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
         # vlm = vlm_integration.VLM(model)
@@ -943,13 +946,13 @@ class LidarCenterNet(nn.Module):
 
 
 
-        return 0, 0
+        # return 0, 0
 
         return pred_wp, rotated_bboxes
 
     def forward(self, rgb, lidar_bev, ego_waypoint, target_point, ego_vel , ego_acc, theta ,target_point_image, bev, label, depth, semantic, num_points=None, save_path=None,
                 bev_points=None, cam_points=None):
-        print("here)")
+        # print("here)")
         loss = {}
 
         if (self.use_point_pillars == True):
@@ -982,13 +985,10 @@ class LidarCenterNet(nn.Module):
 
         elif self.backbone_path == "diffusiondrive":
             features = transfuser_feature[1]
-            x_threshhold = 1  # what unit is this? TODO: CALCULATE A BETTER THRESHHOLD
+          
+        
+            driving_command = target_point.T
 
-           
-            driving_command = torch.tensor([0, 1, 0, 0], dtype=torch.float32, device='cuda')  # shape [4]
-            driving_command = driving_command.unsqueeze(1).repeat(1, 10)  # shape [4, 10]
-
-         
             x = ego_acc[0]  # shape [10]
             y = ego_acc[1]  # shape [10]
             acc_xy = torch.stack([x, y], dim=0)  # shape: [2, 10]
@@ -1063,8 +1063,8 @@ class LidarCenterNet(nn.Module):
             trajectory_query, agents_query = query_out.split(
                 self._query_splits, dim=1)
 
-            print("trajectory Query")
-            print(trajectory_query.shape)
+            # print("trajectory Query")
+            # print(trajectory_query.shape)
             
             
             loss_dict = self.path_out(
@@ -1076,10 +1076,10 @@ class LidarCenterNet(nn.Module):
                 ego_waypoint,
                 None
             )  # {"trajectory": poses_reg}
- 
-            
-            print(loss_dict.keys()) # pred output
+            # print(loss_dict.keys()) # pred output
             loss_wp = loss_dict['trajectory_loss']
+            pred_wp = loss_dict['trajectory']
+            
         # pred topdown view
         pred_bev = self.pred_bev(transfuser_feature[0])
         pred_bev = F.interpolate(pred_bev, (self.config.bev_resolution_height,
@@ -1132,7 +1132,7 @@ class LidarCenterNet(nn.Module):
                                         pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
                                         gt_bboxes=label, expert_waypoints=ego_waypoint, stuck_detector=0, forced_move=False)
 
-        return loss
+        return loss, pred_wp
 
     # Converts the coordinate system to x front y right, vehicle center at the origin.
     # Units are converted from pixels to meters

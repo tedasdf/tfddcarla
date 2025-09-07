@@ -187,6 +187,7 @@ class AutoPilot(autonomous_agent_local.AutonomousAgent):
         speed = input_data['speed'][1]['speed']
         compass = input_data['imu'][1][-1]
         imu_data = input_data['imu'][1]
+        theta = input_data['imu'][1][-1]
 
         accel_x = imu_data[0]
         accel_y = imu_data[1]
@@ -199,7 +200,8 @@ class AutoPilot(autonomous_agent_local.AutonomousAgent):
                 'gps': gps,
                 'speed': speed,
                 'compass': compass,
-                'acceleration': acceleration
+                'acceleration': acceleration,
+                'theta': theta
                 }
 
         return result

@@ -80,30 +80,39 @@ class LeaderboardEvaluator(object):
         if args.timeout:
             self.client_timeout = float(args.timeout)
         self.client.set_timeout(self.client_timeout)
+        # print("connected")
 
         self.world = self.client.load_world('Town01')
         self.traffic_manager = self.client.get_trafficmanager(int(args.trafficManagerPort))
+        # print("loaded world")
 
         dist = pkg_resources.get_distribution("carla")
         if dist.version != 'leaderboard':
             if LooseVersion(dist.version) < LooseVersion('0.9.10'):
                 raise ImportError("CARLA version 0.9.10.1 or newer required. CARLA version found: {}".format(dist))
+            
+        # print("versions are chill")
 
         # Load agent
         module_name = os.path.basename(args.agent).split('.')[0]
+        # print(module_name)
         sys.path.insert(0, os.path.dirname(args.agent))
         self.module_agent = importlib.import_module(module_name)
+        # print("loaded agents")
 
         # Create the ScenarioManager
         self.manager = ScenarioManager(args.timeout, args.debug > 1)
+        # print("Created scneario manager")
 
         # Time control for summary purposes
         self._start_time = GameTime.get_time()
         self._end_time = None
+        # print("time control")
 
         # Create the agent timer
         self._agent_watchdog = Watchdog(int(float(args.timeout)))
         signal.signal(signal.SIGINT, self._signal_handler)
+        # print("fucking cshajkdhjsak")
 
     def _signal_handler(self, signum, frame):
         """
@@ -411,11 +420,14 @@ class LeaderboardEvaluator(object):
             self._load_and_run_scenario(args, config)
 
             route_indexer.save_state(args.checkpoint)
+            break
 
         # save global statistics
         print("\033[1m> Registering the global statistics\033[0m")
         global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
+        
         StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
+        print("Cusadusiya")
 
 
 def main():
@@ -461,9 +473,11 @@ def main():
     arguments = parser.parse_args()
 
     statistics_manager = StatisticsManager()
-
+    leaderboard_evaluator = None
+    
     try:
         leaderboard_evaluator = LeaderboardEvaluator(arguments, statistics_manager)
+        # print("all goooood cun")
         leaderboard_evaluator.run(arguments)
 
     except Exception as e:

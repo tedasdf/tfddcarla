@@ -13,14 +13,14 @@ export SCENARIOS=${WORK_DIR}/leaderboard/data/longest6/eval_scenarios.json
 export ROUTES=${WORK_DIR}/leaderboard/data/longest6/longest6.xml
 export REPETITIONS=1
 export CHALLENGE_TRACK_CODENAME=SENSORS
-export CHECKPOINT_ENDPOINT=${WORK_DIR}/results/transfuser_longest6.json
+export CHECKPOINT_ENDPOINT=${WORK_DIR}/result_json/transfuser_longest6.json
 export TEAM_AGENT=${WORK_DIR}/team_code_transfuser/submission_agent.py
 export TEAM_CONFIG=${WORK_DIR}/model_ckpt/diffusiondrive
 export DEBUG_CHALLENGE=0
 export RESUME=0
 export DATAGEN=0
 
-python3 ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \
+python ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \
 --scenarios=${SCENARIOS}  \
 --routes=${ROUTES} \
 --repetitions=${REPETITIONS} \
@@ -30,3 +30,6 @@ python3 ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \
 --agent-config=${TEAM_CONFIG} \
 --debug=${DEBUG_CHALLENGE} \
 --resume=${RESUME}
+
+
+python --version

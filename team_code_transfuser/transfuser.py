@@ -445,9 +445,11 @@ class LidarEncoder(nn.Module):
     """
 
     def __init__(self, architecture, in_channels=2, out_features=512):
-        super().__init__()
+        super().__init__()  
+        print(f' LidarEncoder got {architecture}')
 
         self._model = timm.create_model(architecture, pretrained=False)
+        print(self._model)
         self._model.fc = None
 
         if (architecture.startswith('regnet')): # Rename modules so we can use the same code

@@ -31,13 +31,13 @@ class TrajectoryScoring:
         self.weights["w_cent"] = weights["Weight_Cent"]
 
     def print_values(self):
-        print(f"Weight_Collision: {self.weights["w_coll"]}")
-        print(f"Weight_Deviation: {self.weights["w_dev"]}")
-        print(f"Weight_Distance: {self.weights["w_dis"]}")
-        print(f"Weight_Speed: {self.weights["w_speed"]}")
-        print(f"Weight_Lat: {self.weights["w_lat"]}")
-        print(f"Weight_Lon: {self.weights["w_lon"]}")
-        print(f"Weight_Cent: {self.weights["w_cent"]}")
+        print(f"Weight_Collision: {self.weights['w_coll']}")
+        print(f"Weight_Deviation: {self.weights['w_dev']}")
+        print(f"Weight_Distance: {self.weights['w_dis']}")
+        print(f"Weight_Speed: {self.weights['w_speed']}")
+        print(f"Weight_Lat: {self.weights['w_lat']}")
+        print(f"Weight_Lon: {self.weights['w_lon']}")
+        print(f"Weight_Cent: {self.weights['w_cent']}")
     
     def compute_scores(self, pred_trajectories, target_point):
         """
