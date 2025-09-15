@@ -324,6 +324,8 @@ class LeaderboardEvaluator(object):
             self._load_and_wait_for_world(args, config.town, config.ego_vehicles)
             self._prepare_ego_vehicles(config.ego_vehicles, False)
             scenario = RouteScenario(world=self.world, config=config, debug_mode=args.debug)
+            print("list_scenarios")
+            print(scenario.list_scenarios)
             self.statistics_manager.set_scenario(scenario.scenario)
 
             # Night mode
@@ -419,7 +421,8 @@ class LeaderboardEvaluator(object):
             
             # setup
             config = route_indexer.next()
-
+            # print("config")
+            # print(config.scenario_file)
             # run
             self._load_and_run_scenario(args, config)
 
@@ -431,13 +434,13 @@ class LeaderboardEvaluator(object):
         global_stats_record = self.statistics_manager.compute_global_statistics(route_indexer.total)
         
         StatisticsManager.save_global_record(global_stats_record, self.sensor_icons, route_indexer.total, args.checkpoint)
-        print("Cusadusiya")
+        # print("Cusadusiya")
 
 
 def main():
     description = "CARLA AD Leaderboard Evaluation: evaluate your Agent in CARLA scenarios\n"
 
-    # general parameters
+    #region general parameters
     parser = argparse.ArgumentParser(description=description, formatter_class=RawTextHelpFormatter)
     parser.add_argument('--host', default='localhost',
                         help='IP of the host server (default: localhost)')
@@ -473,7 +476,7 @@ def main():
     parser.add_argument("--checkpoint", type=str,
                         default='./simulation_results.json',
                         help="Path to checkpoint used for saving statistics and resuming")
-
+    #endregion
     arguments = parser.parse_args()
 
     statistics_manager = StatisticsManager()

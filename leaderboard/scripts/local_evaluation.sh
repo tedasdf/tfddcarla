@@ -9,7 +9,7 @@ export SCENARIO_RUNNER_ROOT=${WORK_DIR}/scenario_runner
 export LEADERBOARD_ROOT=${WORK_DIR}/leaderboard
 export PYTHONPATH="${CARLA_ROOT}/PythonAPI/carla/":"${SCENARIO_RUNNER_ROOT}":"${LEADERBOARD_ROOT}":${PYTHONPATH}
 
-export SCENARIOS=${WORK_DIR}/leaderboard/data/longest6/eval_scenarios.json
+export SCENARIOS=${WORK_DIR}/leaderboard/data/metamorphic_route/FollowLeadingVehicle.json
 export ROUTES=${WORK_DIR}/leaderboard/data/metamorphic_route/FollowLeadingVehicle.xml
 export REPETITIONS=1
 export CHALLENGE_TRACK_CODENAME=SENSORS

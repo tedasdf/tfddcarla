@@ -798,11 +798,11 @@ class LidarCenterNet(nn.Module):
             raise ("The chosen vision backbone does not exist. The options are: transFuser, late_fusion, geometric_fusion, latentTF")
 
      
-        # # print("is it getting here")
-        # # print("featur" , len(features))
-        # # print("feature ", features[0].shape)
-        # # print("image_feauter " ,image_features_grid.shape)
-        # # print("fused feautres",fused_features.shape)
+        # print("is it getting here")
+        # print("featur" , len(features))
+        # print("feature ", features[0].shape)
+        # print("image_feauter " ,image_features_grid.shape)
+        # print("fused feautres",fused_features.shape)
         self.backbone_path = "diffusiondrive"
         if self.backbone_path == "mlp":
             pred_wp, _, _, _, _ = self.forward_gru(
@@ -811,7 +811,7 @@ class LidarCenterNet(nn.Module):
         elif self.backbone_path == "diffusiondrive":
             features = transfuser_feature[1]
           
-            print(target_point.shape)
+            # print(target_point.shape)
             driving_command = target_point.T
 
             x = ego_acc[0]  # shape [10]
@@ -920,14 +920,17 @@ class LidarCenterNet(nn.Module):
         pred_depth = self.depth_decoder(image_features_grid)
         
         pred_wp = forward_pass["trajectory"]
+        
+
+        
   
         #endregion
         # path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
         self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
-                                pred_wp[0], pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+                                pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
                                 gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
-        return pred_wp[0], rotated_bboxes
+        return pred_wp, rotated_bboxes
 
     def forward(self, rgb, lidar_bev, ego_waypoint, target_point, ego_vel , ego_acc, theta ,target_point_image, bev, label, depth, semantic, num_points=None, save_path=None,
                 bev_points=None, cam_points=None):

@@ -285,14 +285,14 @@ class Engine(object):
                            target_point_image=target_point_image,
                            ego_vel=ego_vel.reshape(-1, 1), ego_acc=data['acceleration'], theta = data['theta'], save_path=self.vis_save_path, num_points=num_points)
             else:
-                print("EGO WAYPOINT")
-                print(ego_waypoint)
+                # print("EGO WAYPOINT")
+                # print(ego_waypoint)
 
-                print(ego_waypoint.shape)
+                # print(ego_waypoint.shape)
 
 
-                print("Collected_waypoint")
-                print(collected_waypoint.shape)
+                # print("Collected_waypoint")
+                # print(collected_waypoint.shape)
             
                 losses = self.model( 
                     rgb=rgb, 
