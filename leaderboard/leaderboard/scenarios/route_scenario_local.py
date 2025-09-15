@@ -220,9 +220,11 @@ class RouteScenario(BasicScenario):
 
         # prepare route's trajectory (interpolate and add the GPS route)
         gps_route, route = interpolate_trajectory(world, config.trajectory)
-
+        
         potential_scenarios_definitions, _ = RouteParser.scan_route_for_scenarios(
-            config.town, route, world_annotations)
+            config.town, route, world_annotations) # this checks the route for scenarios
+        # print(f"config.town: {config.town}")
+        print(f'potential scearios = {list(potential_scenarios_definitions)}')
 
 
         print(config)
@@ -365,6 +367,7 @@ class RouteScenario(BasicScenario):
         Based on the parsed route and possible scenarios, build all the scenario classes.
         """
         scenario_instance_vec = []
+        print(f'scenario def: {scenario_definitions}')
 
         if debug_mode:
             for scenario in scenario_definitions:
@@ -378,6 +381,7 @@ class RouteScenario(BasicScenario):
         for scenario_number, definition in enumerate(scenario_definitions):
             # Get the class possibilities for this scenario number
             scenario_class = NUMBER_CLASS_TRANSLATION[definition['name']]
+            print(f'scenario class; {scenario_class}')
 
             # Create the other actors that are going to appear
             if definition['other_actors'] is not None:
@@ -466,7 +470,8 @@ class RouteScenario(BasicScenario):
             amount = town_amount[config.town] if config.town in town_amount else 0
             amount = random.randint(amount, 2*amount)
         else:
-            amount = 500 # use all spawn points
+            # amount = 500 # use all spawn points
+            amount = 0
 
         new_actors = CarlaDataProvider.request_new_batch_actors('vehicle.*',
                                                                 amount,

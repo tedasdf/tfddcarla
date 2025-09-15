@@ -95,9 +95,9 @@ class SubmissionAgent(autonomous_agent.AutonomousAgent):
                 net = LidarCenterNet(self.config, 'cuda',self.backbone, "diffusiondrive", image_architecture, lidar_architecture, use_velocity)
                 if(self.config.sync_batch_norm == True):
                     net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net) # Model was trained with Sync. Batch Norm. Need to convert it otherwise parameters will load incorrectly.
-                state_dict = torch.load(os.path.join(path_to_conf_file, file), map_location='cuda:0')
+                state_dict = torch.load(os.path.join(path_to_conf_file, file), map_location='cuda:0');
                 state_dict = {k[7:]: v for k, v in state_dict.items()} # Removes the .module coming from the Distributed Training. Remove this if you want to evaluate a model trained without DDP.
-                net.load_state_dict(state_dict, strict=False)
+                net.load_state_dict(state_dict, strict=False);
                 net.cuda();
                 net.eval();
                 self.nets.append(net)
@@ -396,13 +396,13 @@ class SubmissionAgent(autonomous_agent.AutonomousAgent):
             safety_box      = safety_box[safety_box[..., 0] > self.config.safety_box_x_min]
             safety_box      = safety_box[safety_box[..., 0] < self.config.safety_box_x_max]
 
-        print("--------------------------------")
-        print("EYIA NVOMSND GIT HD")
-        print(self.pred_wp)
+        # print("--------------------------------")
+        # print("EYIA NVOMSND GIT HD")
+        # print(self.pred_wp)
 
-        print("SHAPE ")
-        print(self.pred_wp.shape)
-        print("------------------------------")
+        # print("SHAPE ")
+        # print(self.pred_wp.shape)
+        # print("------------------------------")
         steer, throttle, brake = self.nets[0].control_pid(self.pred_wp, gt_velocity, is_stuck)
         
         if is_stuck and self.forced_move==1: # no steer for initial frame when unblocking

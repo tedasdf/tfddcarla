@@ -274,7 +274,8 @@ class RouteParser(object):
         """
         Just returns a plain list of possible scenarios that can happen in this route by matching
         the locations from the scenario into the route description
-
+        route_name: config.town
+        world_annotations: json file in dictionary
         :return:  A list of scenario definitions with their correspondent parameters
         """
 
@@ -296,9 +297,11 @@ class RouteParser(object):
                 for event in scenario["available_event_configurations"]:
                     waypoint = event['transform']  # trigger point of this scenario
                     RouteParser.convert_waypoint_float(waypoint)
-                    # We match trigger point to the  route, now we need to check if the route affects
+                    # We match trigger point to the route, now we need to check if the route affects
                     match_position = RouteParser.match_world_location_to_route(
                         waypoint, trajectory)
+                    print("check if the trigger point is in the route")
+                    print(match_position)
                     if match_position is not None:
                         # We match a location for this scenario, create a scenario object so this scenario
                         # can be instantiated later

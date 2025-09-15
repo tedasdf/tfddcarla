@@ -524,8 +524,8 @@ class CustomTransformerDecoderLayer(nn.Module):
         
         # 4.9 predict the offset & heading
         poses_reg, poses_cls = self.task_decoder(traj_feature) #bs,20,8,3; bs,20
-        print(poses_reg.shape)
-        print(poses_cls.shape)
+        # print(poses_reg.shape)
+        # print(poses_cls.shape)
         poses_reg[...,:2] = poses_reg[...,:2] + noisy_traj_points
         poses_reg[..., 2] = poses_reg[..., 2].tanh() * np.pi
 
@@ -748,6 +748,6 @@ class TrajectoryHead(nn.Module):
         mode_idx = poses_cls.argmax(dim=-1)
         mode_idx = mode_idx[...,None,None,None].repeat(1,1,self._num_poses,3)
         
-        # best_reg = torch.gather(poses_reg, 1, mode_idx).squeeze(1)
+        best_reg = torch.gather(poses_reg, 1, mode_idx).squeeze(1)
         
-        return {"trajectory": poses_reg}
+        return {"trajectory": best_reg}

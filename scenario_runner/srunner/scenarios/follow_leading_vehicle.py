@@ -89,6 +89,8 @@ class FollowLeadingVehicle(BasicScenario):
         Custom initialization
         """
 
+        print('initializing actors')
+
         first_vehicle_waypoint, _ = get_waypoint_in_distance(self._reference_waypoint, self._first_vehicle_location)
         self._other_actor_transform = carla.Transform(
             carla.Location(first_vehicle_waypoint.transform.location.x,
@@ -104,6 +106,7 @@ class FollowLeadingVehicle(BasicScenario):
             first_vehicle = CarlaDataProvider.request_new_actor(config.other_actors[0].model, first_vehicle_transform)
         else:
             first_vehicle = CarlaDataProvider.request_new_actor('vehicle.nissan.patrol', first_vehicle_transform)
+            print(f'Printing from initialize_actors: first_vehicle={first_vehicle}')
             
         first_vehicle.set_simulate_physics(enabled=False)
         self.other_actors.append(first_vehicle)
