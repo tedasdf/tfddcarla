@@ -37,13 +37,14 @@ class q3(BaseModel):
 
 
 class VLM():
-    def __init__(self, model="llama3.2-vision:11b"):
+    def __init__(self, model="llama3.2-vision:11b", memory=128):
         self.query = ["Provided a detailed description of a driving scene from a set of car surround images with 6 perspectives, capturing the critical elements such as time of day, weather conditions, road environment, and available lane options.",
                       "Please list and frame the key objectives in the front view that will influence the next driving decision",
                       "Based on the previous description, should we drive conservatively or aggressively? What level and what score should we use?"
                       ]
         self.model = model
         self.messages = []
+        self.memory = memory
 
     def chat_model(self,format, messages):
 
@@ -97,7 +98,7 @@ class VLM():
             ]
         )
         
-        response = self.chat_model(format=q1.model_json_schema(), messages=self.messages)
+        response = self.chat_model(format=q1.schema(), messages=self.messages)
         message = response['message']
         print(message['content'])
         self.messages.append(message)
@@ -105,7 +106,7 @@ class VLM():
 
         # second message
         self.messages.append({'role': 'user', 'content': self.query[1]})
-        response = self.chat_model(format=q2.model_json_schema(), messages=self.messages)
+        response = self.chat_model(format=q2.schema(), messages=self.messages)
         message = response['message']
         print(message['content'])
         self.messages.append(message)
@@ -113,12 +114,15 @@ class VLM():
       
         # third message
         self.messages.append({'role': 'user', 'content': self.query[2]})
-        response = self.chat_model(format=q3.model_json_schema(), messages=self.messages)
+        response = self.chat_model(format=q3.schema(), messages=self.messages)
         message = response['message']
         print(message['content'])
         self.messages.append(message)
         responses.append(response)
-   
+
+        if len(self.messages) > self.memory*7:
+            self.messages = self.messages[-self.memory*7:]
+
         return responses
 
 
@@ -152,11 +156,11 @@ if __name__ == '__main__':
     image = Image.open("./test_images/im1.png")
     response = vlm.step(weights, image)
     weights.update_weights(response)
-    # print(response)
-    # print("\n\n")
-    # image = Image.open("./test_images/im2.png")
-    # response = vlm.step(weights, image)
-    # weights.update_weights(response)
-    # print(response)
+    print(response)
+    print("\n\n")
+    image = Image.open("./test_images/im2.png")
+    response = vlm.step(weights, image)
+    weights.update_weights(response)
+    print(response)
     
     

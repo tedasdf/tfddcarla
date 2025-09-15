@@ -261,5 +261,5 @@ class GlobalConfig:
         for k,v in kwargs.items():
             setattr(self, k, v)
 
-    model = "vlm_model"
+    model = "llama3.2-vision:11b"
     vis_save_path = ""

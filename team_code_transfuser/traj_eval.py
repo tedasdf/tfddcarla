@@ -39,7 +39,7 @@ class TrajectoryScoring:
         print(f"Weight_Lon: {self.weights['w_lon']}")
         print(f"Weight_Cent: {self.weights['w_cent']}")
     
-    def compute_scores(self, pred_trajectories, target_point):
+    def compute_scores(self, pred_trajectories, target_point, agent_bboxes):
         """
         Compute predicted trajectories safety and comfort scores
         input: pred_trajectories
@@ -47,7 +47,10 @@ class TrajectoryScoring:
         """
         weights = self.weights
 
-        #target_point = self.sample['target_info'] 
+        self.sample['pred_ego_fut_trajs'] = pred_trajectories
+        self.sample['gt_attr_labels'] = agent_bboxes
+        self.sample['target_info'] = target_point
+
         # If there are best trajectories from the previous frame in the queue, add them to the trajectory list of the current frame.
         if self.best_trajectory_queue:
             previous_best_trajectories = np.array(self.best_trajectory_queue)
@@ -129,7 +132,7 @@ class TrajectoryScoring:
         :return: True if collision detected, False otherwise.
         """
         for bbox in other_vehicles_bboxes:
-            x_center, y_center, width, height, yaw = bbox
+            x_center, y_center, width, height, yaw, _, _, _ = bbox
             # Create bounds for the bounding box
             x_min = x_center - width / 2
             x_max = x_center + width / 2
@@ -151,7 +154,7 @@ class TrajectoryScoring:
             collision = 0
             for agent in agent_boxes:
                 # Convert agent box format to [x_center, y_center, width, height, yaw]
-                bbox = [agent[0], agent[1], agent[3], agent[4], agent[2]]
+                bbox = [agent[0], agent[1], agent[2], agent[3], agent[4]]
                 if self.check_collision(traj, [bbox]):  # Check collision with each agent
                     collision = 1
                     break
