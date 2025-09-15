@@ -13,7 +13,19 @@ import logging
 import numpy as np
 
 import carla
+import time
+from threading import Thread
+from srunner.scenariomanager.timer import GameTime
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        thread = Thread(target=fn, args=args, kwargs=kwargs)
+        thread.setDaemon(True)
+        thread.start()
+
+        return thread
+    return wrapper
 
 class CallBack(object):
 
@@ -21,14 +33,14 @@ class CallBack(object):
     Class the sensors listen to in order to receive their data each frame
     """
 
-    def __init__(self, tag, sensor, data_provider):
+    def __init__(self, tag, sensor_type, sensor, data_provider):
         """
         Initializes the call back
         """
         self._tag = tag
         self._data_provider = data_provider
 
-        self._data_provider.register_sensor(tag, sensor)
+        self._data_provider.register_sensor(tag, sensor_type, sensor)
 
     def __call__(self, data):
         """
@@ -123,3 +135,84 @@ class SensorInterface(object):
         for key in self._sensors_objects:
             data_dict[key] = (self._timestamps[key], self._data_buffers[key])
         return data_dict
+
+class BaseReader(object):
+    def __init__(self, vehicle, reading_frequency=1.0):
+        self._vehicle = vehicle
+        self._reading_frequency = reading_frequency
+        self._callback = None
+        self._run_ps = True
+        self.run()
+
+    def __call__(self):
+        pass
+
+    @threaded
+    def run(self):
+        first_time = True
+        latest_time = GameTime.get_time()
+        while self._run_ps:
+            if self._callback is not None:
+                current_time = GameTime.get_time()
+
+                # Second part forces the sensors to send data at the first tick, regardless of frequency
+                if current_time - latest_time > (1 / self._reading_frequency) \
+                        or (first_time and GameTime.get_frame() != 0):
+                    self._callback(GenericMeasurement(self.__call__(), GameTime.get_frame()))
+                    latest_time = GameTime.get_time()
+                    first_time = False
+
+                else:
+                    time.sleep(0.001)
+
+    def listen(self, callback):
+        # Tell that this function receives what the producer does.
+        self._callback = callback
+
+    def stop(self):
+        self._run_ps = False
+
+    def destroy(self):
+        self._run_ps = False
+
+
+class SpeedometerReader(BaseReader):
+    """
+    Sensor to measure the speed of the vehicle.
+    """
+    MAX_CONNECTION_ATTEMPTS = 10
+
+    def _get_forward_speed(self, transform=None, velocity=None):
+        """ Convert the vehicle transform directly to forward speed """
+        if not velocity:
+            velocity = self._vehicle.get_velocity()
+        if not transform:
+            transform = self._vehicle.get_transform()
+
+        vel_np = np.array([velocity.x, velocity.y, velocity.z])
+        pitch = np.deg2rad(transform.rotation.pitch)
+        yaw = np.deg2rad(transform.rotation.yaw)
+        orientation = np.array([np.cos(pitch) * np.cos(yaw), np.cos(pitch) * np.sin(yaw), np.sin(pitch)])
+        speed = np.dot(vel_np, orientation)
+        return speed
+
+    def __call__(self):
+        """ We convert the vehicle physics information into a convenient dictionary """
+
+        # protect this access against timeout
+        attempts = 0
+        while attempts < self.MAX_CONNECTION_ATTEMPTS:
+            try:
+                velocity = self._vehicle.get_velocity()
+                transform = self._vehicle.get_transform()
+                break
+            except Exception:
+                attempts += 1
+                time.sleep(0.2)
+                continue
+
+        return {'speed': self._get_forward_speed(transform=transform, velocity=velocity)}
+    
+class OpenDriveMapReader(BaseReader):
+    def __call__(self):
+        return {'opendrive': CarlaDataProvider.get_map().to_opendrive()}

@@ -100,6 +100,7 @@ class FollowLeadingVehicle(BasicScenario):
                            self._other_actor_transform.location.y,
                            self._other_actor_transform.location.z - 500),
             self._other_actor_transform.rotation)
+        
         if config.other_actors: # if we specify a non-default model in the config
             first_vehicle = CarlaDataProvider.request_new_actor(config.other_actors[0].model, first_vehicle_transform)
         else:

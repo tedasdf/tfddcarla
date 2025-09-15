@@ -712,7 +712,7 @@ class TrajectoryHead(nn.Module):
         noisy_trajs = self.denorm_odo(img)
         ego_fut_mode = img.shape[1]
         for k in roll_timesteps[:]:
-            print("asdf")
+            # print("asdf")
             x_boxes = torch.clamp(img, min=-1, max=1)
             noisy_traj_points = self.denorm_odo(x_boxes)
 

@@ -668,13 +668,13 @@ class LidarCenterNet(nn.Module):
         ).to(self.device)
 
         # gru decoder
-        self.backbone_path = backbone_path
+        self.backbone_path = "diffusiondrive"
         if backbone_path == "mlp":  # GRU OG
             self.path_out = GRUDecoder(
                 self.config.gru_hidden_size, self.gru_concat_target_point, self.device
             )
         elif backbone_path == "diffusiondrive":
-            # print("Not yet implemented")
+            # print("Not yet implemented") # ?
             # print(config.path_config)
             self.path_out = TrajectoryHead(
                 num_poses=8,
@@ -772,7 +772,8 @@ class LidarCenterNet(nn.Module):
 
     def forward_ego(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
                     stuck_detector=0, forced_move=False, num_points=None, rgb_back=None, debug=False):
-
+        
+        #region
         if (self.use_point_pillars == True):
             lidar_bev = self.point_pillar_net(lidar_bev, num_points)
             # For consitency this is also done in voxelization
@@ -831,8 +832,8 @@ class LidarCenterNet(nn.Module):
             vy = vel * torch.sin(theta)
             velocity_xy = torch.stack([vx, vy], dim=0)  # shape: [2, 10]
 
-            print(driving_command.shape)
-            print(velocity_xy.shape)
+            # print(driving_command.shape)
+            # print(velocity_xy.shape)
             acc_xy = acc_xy.unsqueeze(1)
             # Combine into a single status_feature
             status_feature = torch.cat(
@@ -849,7 +850,6 @@ class LidarCenterNet(nn.Module):
             bev_spatial_shape = features.shape[2:]
             concat_cross_bev_shape = fused_features.shape[2:]
 
-            
             # fused_features = fused_features.unsqueeze(0)  # [1, 10, 512]
             # fused_features = fused_features.unsqueeze(2)  # [1, 10, 1, 512]
 
@@ -861,7 +861,6 @@ class LidarCenterNet(nn.Module):
             status_encoding = self._status_encoding(status_feature)
             
       
-
             keyval = torch.cat(
                 [bev_feature, status_encoding[:, None]], dim=1)
         
@@ -889,10 +888,6 @@ class LidarCenterNet(nn.Module):
 
             trajectory_query, agents_query = query_out.split(
                 self._query_splits, dim=1)
-
-            # print("trajectory Query")
-            # print(trajectory_query.shape)
-            
             
             forward_pass = self.path_out(
                 trajectory_query,
@@ -903,14 +898,6 @@ class LidarCenterNet(nn.Module):
                 None,
                 None
             )  # {"trajectory": poses_reg}
-            # print(loss_dict.keys()) # pred output
-
-            
-            # print("dawkodkawopdkwaodkawopkdawkdpoawkdop")
-            
-            # print(forward_pass["trajectory"].shape)
-            # print(forward_pass)
-            
 
         preds = self.head([transfuser_feature[0]])
         results = self.head.get_bboxes(
@@ -932,23 +919,15 @@ class LidarCenterNet(nn.Module):
         pred_semantic = self.seg_decoder(image_features_grid)
         pred_depth = self.depth_decoder(image_features_grid)
         
-        pred_wp = forward_pass["trajectory"][0][0]
-        path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
+        pred_wp = forward_pass["trajectory"]
+  
+        #endregion
+        # path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
         self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
-                                pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+                                pred_wp[0], pred_bev, pred_semantic, pred_depth, bboxes, self.device,
                                 gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
-        # CALL VLM WITH poses_reg TO DECIDE BEST PATH
-        # vlm = vlm_integration.VLM(model)
-        
-        # response = vlm.step(rgb, self.weights)
-        # self.weights.update_weights(response)
-
-
-
-        # return 0, 0
-
-        return pred_wp, rotated_bboxes
+        return pred_wp[0], rotated_bboxes
 
     def forward(self, rgb, lidar_bev, ego_waypoint, target_point, ego_vel , ego_acc, theta ,target_point_image, bev, label, depth, semantic, num_points=None, save_path=None,
                 bev_points=None, cam_points=None):
@@ -1218,6 +1197,7 @@ class LidarCenterNet(nn.Module):
         label = label.detach().cpu().numpy()
 
         for bbox, points in zip(label, waypoints):
+           
             x, y, w, h, yaw, speed, brake = bbox
             c, s = np.cos(yaw), np.sin(yaw)
             # use y x because coordinate is changed
@@ -1240,8 +1220,11 @@ class LidarCenterNet(nn.Module):
             #            y
 
             points[:, 0] *= -1
+            
             points = points * self.config.pixels_per_meter
+           
             points = points[:, [1, 0]]
+           
             points = np.concatenate(
                 (points, np.ones_like(points[:, :1])), axis=-1)
 
@@ -1318,11 +1301,12 @@ class LidarCenterNet(nn.Module):
         label = torch.zeros((1, 1, 7)).to(device)
         label[:, -1, 0] = 128.
         label[:, -1, 1] = 256.
-
+       
         if not expert_waypoints is None:
+            
             images = self.draw_waypoints(
                 label[0], expert_waypoints[i:i+1], images, color=(0, 0, 255))
-
+        
         images = self.draw_waypoints(label[0], deepcopy(
             pred_wp[i:i + 1, 2:]), images, color=(255, 255, 255))  # Auxliary waypoints in white
         images = self.draw_waypoints(label[0], deepcopy(

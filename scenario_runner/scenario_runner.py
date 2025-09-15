@@ -439,7 +439,6 @@ class ScenarioRunner(object):
         Run the route scenario
         """
         result = False
-
         if self._args.route:
             routes = self._args.route[0]
             scenario_file = self._args.route[1]

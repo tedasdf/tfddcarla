@@ -35,6 +35,7 @@ class ScenarioConfigurationParser(object):
         """
 
         list_of_config_files = glob.glob("{}/srunner/examples/*.xml".format(os.getenv('SCENARIO_RUNNER_ROOT', "./")))
+        list_of_config_files += glob.glob("{}/srunner/examples/metamorphic/*.xml".format(os.getenv('SCENARIO_RUNNER_ROOT', "./")))
 
         if config_file_name != '':
             list_of_config_files.append(config_file_name)

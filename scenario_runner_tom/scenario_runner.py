@@ -445,7 +445,10 @@ class ScenarioRunner(object):
         """
         result = False
 
+        self._args.route = self._args.route[0].split(',')
+
         if self._args.route:
+            print(self._args.route)
             routes = self._args.route[0]
             scenario_file = self._args.route[1]
             single_route = None
@@ -453,11 +456,12 @@ class ScenarioRunner(object):
                 single_route = self._args.route[2]
 
         # retrieve routes
-        route_configurations = RouteParser.parse_routes_file(routes, scenario_file, single_route)
+        route_configurations = RouteParser.parse_routes_file(routes, scenario_file, single_route) # xml, json, id
+        print(route_configurations)
 
         for config in route_configurations:
             for _ in range(self._args.repetitions):
-                result = self._load_and_run_scenario(config)
+                result = self._load_and_run_scenario(config) # route_configurations
 
                 self._cleanup()
         return result

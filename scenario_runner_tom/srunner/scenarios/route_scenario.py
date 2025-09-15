@@ -221,6 +221,7 @@ class RouteScenario(BasicScenario):
         Estimate the duration of the route
         """
         route_length = 0.0  # in meters
+        # print(self.route) # dont fking print this idiot
 
         prev_point = self.route[0][0]
         for current_point, _ in self.route[1:]:

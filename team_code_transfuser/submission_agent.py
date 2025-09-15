@@ -13,19 +13,13 @@ import numpy as np
 import math
 
 from leaderboard.autoagents import autonomous_agent
-# print("yeah allg brudda0")
 from model import LidarCenterNet
-# print("yeah allg brudda1")
 from config import GlobalConfig
-# print("yeah allg brudda2")
 from data import lidar_to_histogram_features, draw_target_point, lidar_bev_cam_correspondences
-# print("yeah allg brudda3")
 from shapely.geometry import Polygon
-# print("yeah allg brudda4")
 from vlm_integration import VLM
-# print("yeah allg brudda5")
 from traj_eval import TrajectoryScoring
-# print("yeah allg brudda6")
+
 
 import itertools
 import pathlib
@@ -37,10 +31,10 @@ else:
     pathlib.Path(SAVE_PATH).mkdir(parents=True, exist_ok=True)
 
 def get_entry_point():
-    return 'HybridAgent'
+    return 'SubmissionAgent'
 
 
-class HybridAgent(autonomous_agent.AutonomousAgent):
+class SubmissionAgent(autonomous_agent.AutonomousAgent):
     def setup(self, path_to_conf_file, route_index=None):
         self.track = autonomous_agent.Track.SENSORS
         self.config_path = path_to_conf_file
@@ -104,8 +98,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                 state_dict = torch.load(os.path.join(path_to_conf_file, file), map_location='cuda:0')
                 state_dict = {k[7:]: v for k, v in state_dict.items()} # Removes the .module coming from the Distributed Training. Remove this if you want to evaluate a model trained without DDP.
                 net.load_state_dict(state_dict, strict=False)
-                net.cuda()
-                net.eval()
+                net.cuda();
+                net.eval();
                 self.nets.append(net)
 
 
@@ -118,6 +112,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         self.rgb_back = None #For debugging
 
         self.vis_save_path = "./vis_save_path"
+
+        self.stored_used_waypoints = []
 
     def _init(self):
         self._route_planner = RoutePlanner(self.config.route_planner_min_distance, self.config.route_planner_max_distance)
@@ -240,6 +236,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         denoised_pos = np.average(self.gps_buffer, axis=0)
 
         waypoint_route = self._route_planner.run_step(denoised_pos)
+       
         next_wp, next_cmd = waypoint_route[1] if len(waypoint_route) > 1 else waypoint_route[0]
         result['next_command'] = next_cmd.value
 
@@ -316,6 +313,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
         with torch.no_grad():
             pred_wps = []
             bounding_boxes = []
+            
             for i in range(self.model_count):
                 rotated_bb = []
                 if (self.backbone == 'transFuser'):
@@ -326,6 +324,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                            theta = theta, 
                            save_path=self.vis_save_path, 
                            num_points=num_points)
+    
                     # pred_wp, _ = self.nets[i].forward_ego(image, lidar_bev, target_point, target_point_image, velocity, acceleration, 
                     #                                       theta , num_points=num_points, save_path=SAVE_PATH, stuck_detector=self.stuck_detector,
                     #                                       forced_move=is_stuck, debug=self.config.debug, rgb_back=self.rgb_back)
@@ -355,6 +354,7 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
 
         self.bb_buffer.append(bbs_vehicle_coordinate_system)
         self.pred_wp = pred_wps
+    
 
         # self.pred_wp = torch.stack(pred_wps, dim=0).mean(dim=0) #Average the predictions from the ensembles
         # self.pred_wp = vlm_function(pred_wps , ..... )
@@ -367,7 +367,8 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
                                 [-np.sin(rad), np.cos(rad)]])
             # inverse
             degree_matrix = degree_matrix.T
-            cur_pred_wp = self.pred_wp[i].detach().cpu().numpy()
+            cur_pred_wp = self.pred_wp[i].detach().cpu().numpy()[:, :2]  # (8, 2)
+
             transformed_wp = (degree_matrix @ cur_pred_wp.T).T
             pred_wp_transformed.append(transformed_wp)
 
@@ -395,6 +396,13 @@ class HybridAgent(autonomous_agent.AutonomousAgent):
             safety_box      = safety_box[safety_box[..., 0] > self.config.safety_box_x_min]
             safety_box      = safety_box[safety_box[..., 0] < self.config.safety_box_x_max]
 
+        print("--------------------------------")
+        print("EYIA NVOMSND GIT HD")
+        print(self.pred_wp)
+
+        print("SHAPE ")
+        print(self.pred_wp.shape)
+        print("------------------------------")
         steer, throttle, brake = self.nets[0].control_pid(self.pred_wp, gt_velocity, is_stuck)
         
         if is_stuck and self.forced_move==1: # no steer for initial frame when unblocking

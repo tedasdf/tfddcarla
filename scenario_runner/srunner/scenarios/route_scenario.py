@@ -184,7 +184,9 @@ class RouteScenario(BasicScenario):
 
         # prepare route's trajectory (interpolate and add the GPS route)
         gps_route, route = interpolate_trajectory(world, config.trajectory)
-
+        print("#### Route interpolate_trajectory")
+        print(route)
+        # raise ValueError
         potential_scenarios_definitions, _ = RouteParser.scan_route_for_scenarios(config.town, route, world_annotations)
 
         self.route = route
@@ -221,8 +223,9 @@ class RouteScenario(BasicScenario):
         Estimate the duration of the route
         """
         route_length = 0.0  # in meters
+        print(f'Self.route = {self.route[0]}')
 
-        prev_point = self.route[0][0]
+        prev_point = self.route[0][0] # empty
         for current_point, _ in self.route[1:]:
             dist = current_point.location.distance(prev_point.location)
             route_length += dist
@@ -321,7 +324,7 @@ class RouteScenario(BasicScenario):
 
             # Create the other actors that are going to appear
             if definition['other_actors'] is not None:
-                list_of_actor_conf_instances = self._get_actors_instances(definition['other_actors'])
+                list_of_actor_conf_instances = self._get_actors_instances(definition['other_actors']) #this where they spawn????
             else:
                 list_of_actor_conf_instances = []
             # Create an actor configuration for the ego-vehicle trigger position

@@ -136,6 +136,7 @@ class CallBack(object):
         self._data_provider = data_provider
 
         self._data_provider.register_sensor(tag, sensor_type, sensor)
+        # self._data_provider.register_sensor(tag, sensor)
 
     def __call__(self, data):
         if isinstance(data, carla.libcarla.Image):

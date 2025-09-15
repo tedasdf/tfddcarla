@@ -404,15 +404,19 @@ class LeaderboardEvaluator(object):
         Run the challenge mode
         """
         route_indexer = RouteIndexer(args.routes, args.scenarios, args.repetitions)
-
-        if args.resume:
+        
+        resume = False # hard coded
+      
+        if resume:
             route_indexer.resume(args.checkpoint)
             self.statistics_manager.resume(args.checkpoint)
         else:
             self.statistics_manager.clear_record(args.checkpoint)
             route_indexer.save_state(args.checkpoint)
 
+        
         while route_indexer.peek():
+            
             # setup
             config = route_indexer.next()
 

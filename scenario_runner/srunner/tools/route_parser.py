@@ -48,7 +48,7 @@ class RouteParser(object):
     def parse_routes_file(route_filename, scenario_file, single_route=None):
         """
         Returns a list of route elements.
-        :param route_filename: the path to a set of routes.
+        :param route_filename: the path to a set of routes. 
         :param single_route: If set, only this route shall be returned
         :return: List of dicts containing the waypoints, id and town of the routes
         """
@@ -65,6 +65,7 @@ class RouteParser(object):
             new_config.town = route.attrib['town']
             new_config.name = "RouteScenario_{}".format(route_id)
             new_config.weather = RouteParser.parse_weather(route)
+            
             new_config.scenario_file = scenario_file
 
             waypoint_list = []  # the list of waypoints that can be found on this route
@@ -76,7 +77,10 @@ class RouteParser(object):
             new_config.trajectory = waypoint_list
 
             list_route_descriptions.append(new_config)
-
+            
+        print("-------------------------------")
+        print(list_route_descriptions[0].scenario_file)
+        
         return list_route_descriptions
 
     @staticmethod

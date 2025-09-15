@@ -10,7 +10,7 @@ export LEADERBOARD_ROOT=${WORK_DIR}/leaderboard
 export PYTHONPATH="${CARLA_ROOT}/PythonAPI/carla/":"${SCENARIO_RUNNER_ROOT}":"${LEADERBOARD_ROOT}":${PYTHONPATH}
 
 export SCENARIOS=${WORK_DIR}/leaderboard/data/longest6/eval_scenarios.json
-export ROUTES=${WORK_DIR}/leaderboard/data/metamorphic_route/FollowLeadingVehicle.xml
+export ROUTES=${WORK_DIR}/leaderboard/data/longest6/longest6.xml
 export REPETITIONS=1
 export CHALLENGE_TRACK_CODENAME=SENSORS
 export CHECKPOINT_ENDPOINT=${WORK_DIR}/result_json/transfuser_longest6.json
@@ -20,28 +20,12 @@ export DEBUG_CHALLENGE=0
 export RESUME=0
 export DATAGEN=0
 
-# gnome-terminal -- bash -c "${CARLA_ROOT}/CarlaUE4.sh -quality-level=Epic --world-port=2000; exec bash"
-# echo "Opened CARLA"
-
-# gnome-terminal -- bash -c "python ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \
-# --scenarios=${SCENARIOS}  \
-# --routes=${ROUTES} \
-# --repetitions=${REPETITIONS} \
-# --track=${CHALLENGE_TRACK_CODENAME} \
-# --checkpoint=${CHECKPOINT_ENDPOINT} \
-# --agent=${TEAM_AGENT} \
-# --agent-config=${TEAM_CONFIG} \
-# --debug=${DEBUG_CHALLENGE} \
-# --resume=${RESUME}; exec bash
-# "
 python ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator_local.py \
---scenarios=${SCENARIOS}  \
---routes=${ROUTES} \
---repetitions=${REPETITIONS} \
---track=${CHALLENGE_TRACK_CODENAME} \
---checkpoint=${CHECKPOINT_ENDPOINT} \
---agent=${TEAM_AGENT} \
+--scenarios=${SC}
+--agent=${agent} \
+--agentConfig=${agentconfig} \
+--routes=${route} \
+--scenarios=${scenario_file} \
 --agent-config=${TEAM_CONFIG} \
---debug=${DEBUG_CHALLENGE} \
+--debug=${DEBUG_CAHLLENGE} \
 --resume=${RESUME}
-python --version

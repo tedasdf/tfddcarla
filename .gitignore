@@ -174,3 +174,5 @@ scenario_runner-0.9.15/*
 old/*
 team_code_transfuser/logdir/transfuser
 team_code_transfuser/output_log.txt
+team_code_transfuser/dd.pth
+vis_save_path/*

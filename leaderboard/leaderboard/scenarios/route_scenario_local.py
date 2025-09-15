@@ -224,6 +224,8 @@ class RouteScenario(BasicScenario):
         potential_scenarios_definitions, _ = RouteParser.scan_route_for_scenarios(
             config.town, route, world_annotations)
 
+
+        print(config)
         self.route = route
         CarlaDataProvider.set_ego_vehicle_route(convert_transform_to_location(self.route))
 
