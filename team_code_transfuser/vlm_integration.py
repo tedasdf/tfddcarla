@@ -57,6 +57,9 @@ class VLM():
         if response.status_code != 200:
             raise Exception("Error: Server responded with ",
                             response.status_code)
+        print("=====================CHATMODEL====================================")
+        print(response.json())
+        print("=========================================================")
         return response.json()
 
     def step(self, weights, combined_image): #weights, combined_image)
@@ -80,15 +83,15 @@ class VLM():
                 and help defining the weights of the following metrics:
 
                 Safety Metrics:
-                Weight_Collision: a function that increases collision penalty as the vehicle gets closer to an obstacle, so near obstacles have much higher risk than far ones. Initial: {weights.w_coll:.2f}  
-                Weight_Deviation: a penalty that increases as the vehicle moves further from the desired lane or path. Initial: {weights.w_dev:.2f}  
-                Weight_Distance: a penalty that increases when the vehicle’s distance to the goal becomes longer than necessary. Initial: {weights.w_dis:.2f}  
-                Weight_Speed: a penalty for speeds that are too high or too low compared to the desired speed profile. Initial: {weights.w_speed:.2f}  
+                Weight_Collision: a function that increases collision penalty as the vehicle gets closer to an obstacle, so near obstacles have much higher risk than far ones. Initial: {weights['w_coll']:.2f}  
+                Weight_Deviation: a penalty that increases as the vehicle moves further from the desired lane or path. Initial: {weights['w_dev']:.2f}  
+                Weight_Distance: a penalty that increases when the vehicle’s distance to the goal becomes longer than necessary. Initial: {weights['w_dis']:.2f}  
+                Weight_Speed: a penalty for speeds that are too high or too low compared to the desired speed profile. Initial: {weights['w_speed']:.2f}  
 
                 Comfort Metrics:
-                Weight_Lat: a penalty for high sideways (lateral) acceleration that could cause discomfort. Initial: {weights.w_lat:.2f}  
-                Weight_Lon: a penalty for high forward/backward (longitudinal) acceleration changes that could cause discomfort. Initial: {weights.w_lon:.2f}  
-                Weight_Cent: a penalty for high centripetal acceleration when turning, linked to cornering comfort. Initial: {weights.w_cent:.2f}  
+                Weight_Lat: a penalty for high sideways (lateral) acceleration that could cause discomfort. Initial: {weights['w_lat']:.2f}  
+                Weight_Lon: a penalty for high forward/backward (longitudinal) acceleration changes that could cause discomfort. Initial: {weights['w_lon']:.2f}  
+                Weight_Cent: a penalty for high centripetal acceleration when turning, linked to cornering comfort. Initial: {weights['w_cent']:.2f}  
                 """
             },
             {'role': 'user',
@@ -100,7 +103,7 @@ class VLM():
         
         response = self.chat_model(format=q1.schema(), messages=self.messages)
         message = response['message']
-        print(message['content'])
+        # print(message['content'])
         self.messages.append(message)
         responses.append(response)
 
@@ -108,7 +111,7 @@ class VLM():
         self.messages.append({'role': 'user', 'content': self.query[1]})
         response = self.chat_model(format=q2.schema(), messages=self.messages)
         message = response['message']
-        print(message['content'])
+        # print(message['content'])
         self.messages.append(message)
         responses.append(response)
       
@@ -116,7 +119,7 @@ class VLM():
         self.messages.append({'role': 'user', 'content': self.query[2]})
         response = self.chat_model(format=q3.schema(), messages=self.messages)
         message = response['message']
-        print(message['content'])
+        # print(message['content'])
         self.messages.append(message)
         responses.append(response)
 

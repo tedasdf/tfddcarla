@@ -1,6 +1,7 @@
 import numpy as np
 from collections import deque
 import json
+import torch
 
 class TrajectoryScoring:
     def __init__(self):
@@ -20,7 +21,9 @@ class TrajectoryScoring:
         self.best_trajectory_queue = deque(maxlen=3) 
 
     def update_weights(self, response):
+        print(response)
         raw_json = response[-1]["message"]["content"]
+        print(raw_json)
         weights = json.loads(raw_json)
         self.weights["w_coll"] = weights["Weight_Collision"]
         self.weights["w_dev"] = weights["Weight_Deviation"]
@@ -70,9 +73,9 @@ class TrajectoryScoring:
 
         scores = []
         for i, pred_traj in enumerate(pred_trajectories):
-            target_distance = self.calculate_distance_to_target(pred_traj.cpu(), target_point)
+            target_distance = self.calculate_distance_to_target(pred_traj.cpu(), target_point.cpu())
             # Calculate the angle deviation of the current trajectory
-            angle_deviation_cost = self.calculate_angle_deviation(pred_traj.cpu(), pred_traj[0].cpu(), target_point)
+            angle_deviation_cost = self.calculate_angle_deviation(pred_traj.cpu(), pred_traj[0].cpu(), target_point.cpu())
             collision = self.calculate_collisions_with_agents()[i]
 
             # Calculate speed cost for the current trajectory
@@ -110,11 +113,14 @@ class TrajectoryScoring:
         return scores
     
     def calculate_angle_deviation(self, trajectory, current_position, target_position):
-        target_vector = np.array(target_position) - np.array(current_position)
+        target = torch.tensor(trajectory[-1], device='cuda:0').cpu()
+        current = torch.tensor(current_position, device='cuda:0').cpu()
+        current = current[:2].unsqueeze(0)
+        target_vector = np.array(target_position) - np.array(current)
         angle_deviation_scores = []
-        for point in trajectory:
-            point_vector = np.array(point) - np.array(current_position)
-            dot_product = np.dot(target_vector, point_vector)
+        for point in target:
+            point_vector = np.array(point) - np.array(current)
+            dot_product = np.dot(target_vector, point_vector.T)
             norm_product = np.linalg.norm(target_vector) * np.linalg.norm(point_vector)
             angle_cosine = dot_product / norm_product
             angle_deviation = np.arccos(angle_cosine)  # Value in radians
@@ -122,7 +128,9 @@ class TrajectoryScoring:
         return np.mean(angle_deviation_scores)
     
     def calculate_distance_to_target(self, trajectory, target_point):
-        return np.linalg.norm(trajectory[-1].cpu() - target_point)
+        t = torch.tensor(trajectory[-1], device='cuda:0').cpu()
+        traj = t[:2].unsqueeze(0)
+        return np.linalg.norm(traj - target_point)
 
     def check_collision(self, trajectory, other_vehicles_bboxes):
         """
@@ -132,7 +140,8 @@ class TrajectoryScoring:
         :return: True if collision detected, False otherwise.
         """
         for bbox in other_vehicles_bboxes:
-            x_center, y_center, width, height, yaw, _, _, _ = bbox
+            x_center, y_center, width, height, yaw = bbox
+            print(bbox)
             # Create bounds for the bounding box
             x_min = x_center - width / 2
             x_max = x_center + width / 2
@@ -141,7 +150,7 @@ class TrajectoryScoring:
 
             # Check each point in the trajectory
             for point in trajectory:
-                x, y = point
+                x, y, _ = point
                 if x_min <= x <= x_max and y_min <= y <= y_max:
                     return True  # Collision detected
         return False  # No collision detected
@@ -153,8 +162,13 @@ class TrajectoryScoring:
         for traj in trajectories:
             collision = 0
             for agent in agent_boxes:
+
+                print("--------------")
+                print(agent)
+                print("--------------")
+                agent_box = agent[0]
                 # Convert agent box format to [x_center, y_center, width, height, yaw]
-                bbox = [agent[0], agent[1], agent[2], agent[3], agent[4]]
+                bbox = [agent_box[0], agent_box[1], agent_box[2], agent_box[3], agent_box[4]]
                 if self.check_collision(traj, [bbox]):  # Check collision with each agent
                     collision = 1
                     break

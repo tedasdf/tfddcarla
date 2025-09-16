@@ -747,7 +747,10 @@ class TrajectoryHead(nn.Module):
             ).prev_sample
         mode_idx = poses_cls.argmax(dim=-1)
         mode_idx = mode_idx[...,None,None,None].repeat(1,1,self._num_poses,3)
-        
+
+        # print("WITHIN TRAJECTORY HEAD ")
+        # print(poses_reg.shape)
+
         best_reg = torch.gather(poses_reg, 1, mode_idx).squeeze(1)
-        
-        return {"trajectory": best_reg}
+        # print(best_reg.shape)
+        return {"trajectory": poses_reg.squeeze(0)}

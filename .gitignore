@@ -163,7 +163,7 @@ results/*
 result_json/*
 results_test/*
 model_ckpt/
-data/
+# data/
 logdir/transfuser/
 temp_store/
 tomrepo/scenario_runner/*

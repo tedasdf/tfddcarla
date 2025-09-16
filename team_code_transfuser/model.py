@@ -33,6 +33,8 @@ from torchvision import models
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn as nn
+from torchvision.transforms.functional import to_pil_image
+
 from mmcv.cnn import bias_init_with_prob, normal_init
 from mmcv.ops import batched_nms
 from mmcv.runner import force_fp32
@@ -587,7 +589,8 @@ class LidarCenterNet(nn.Module):
         self.gru_concat_target_point = config.gru_concat_target_point
         self.use_point_pillars = config.use_point_pillars
         self.vlm = vlm_integration.VLM(config.model)
-        self.trajectory_scorer = traj_eval.TrajectoryScorer()
+        self.trajectory_scorer = traj_eval.TrajectoryScoring()
+        
 
         if (self.use_point_pillars == True):
             self.point_pillar_net = PointPillarNet(config.num_input, config.num_features,
@@ -687,7 +690,7 @@ class LidarCenterNet(nn.Module):
                 plan_anchor_path="/home/fypits25/Documents/tfddcarla/kmeans_navsim_traj_20.npy",
                 config=config.path_config,
             )
-
+            
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
         # pid controller
@@ -908,11 +911,11 @@ class LidarCenterNet(nn.Module):
                 None
             )  # {"trajectory": poses_reg}
             # print(loss_dict.keys()) # pred output
-
             
-            # print("dawkodkawopdkwaodkawopkdawkdpoawkdop")
             
-            # print(forward_pass["trajectory"].shape)
+            print("dawkodkawopdkwaodkawopkdawkdpoawkdop")
+            print(forward_pass["trajectory"].shape)
+            print("----------------------------------------")
             # print(forward_pass)
             
 
@@ -936,17 +939,16 @@ class LidarCenterNet(nn.Module):
         pred_semantic = self.seg_decoder(image_features_grid)
         pred_depth = self.depth_decoder(image_features_grid)
         
-        pred_wp = forward_pass["trajectory"][0][0]
-        path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
-        self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
-                                pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
-                                pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
-                                gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
+        pred_wp = forward_pass["trajectory"]
+        # path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
+        # self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
+        #                         pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+        #                         pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+        #                         gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
-        
-        response = self.vlm.step(self.weights, rgb)
-        self.weights.update_weights(response)
+        img_pil = to_pil_image(rgb[0].cpu().byte())  
+        response = self.vlm.step(self.trajectory_scorer.weights, img_pil)
         self.trajectory_scorer.update_weights(response)
         self.trajectory_scorer.compute_scores(pred_wp, target_point, rotated_bboxes)
         # return 0, 0
