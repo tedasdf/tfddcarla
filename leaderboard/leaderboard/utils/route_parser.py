@@ -301,6 +301,7 @@ class RouteParser(object):
                     match_position = RouteParser.match_world_location_to_route(
                         waypoint, trajectory)
                     print("check if the trigger point is in the route")
+                    print(f'waypoint = {waypoint}, trajectory = {trajectory}')
                     print(match_position)
                     if match_position is not None:
                         # We match a location for this scenario, create a scenario object so this scenario

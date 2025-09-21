@@ -1,14 +1,14 @@
 <routes>
    <route id="0" town="Town01">
    
-      <!-- <weathers>
+      <weathers>
          <weather route_percentage="0"
             cloudiness="5.0" precipitation="0.0" precipitation_deposits="0.0" wetness="0.0"
             wind_intensity="10.0" sun_azimuth_angle="-1.0" sun_altitude_angle="90.0" fog_density="2.0"/>
          <weather route_percentage="100"
             cloudiness="5.0" precipitation="0.0" precipitation_deposits="0.0" wetness="0.0"
             wind_intensity="10.0" sun_azimuth_angle="-1.0" sun_altitude_angle="15.0" fog_density="2.0"/>
-      </weathers> -->
+      </weathers>
 
       <!-- <background_activity>
          <vehicle_amount>0</vehicle_amount>

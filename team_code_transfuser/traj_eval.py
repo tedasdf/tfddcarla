@@ -21,9 +21,9 @@ class TrajectoryScoring:
         self.best_trajectory_queue = deque(maxlen=3) 
 
     def update_weights(self, response):
-        print(response)
+        # print(response)
         raw_json = response[-1]["message"]["content"]
-        print(raw_json)
+        # print(raw_json)
         weights = json.loads(raw_json)
         self.weights["w_coll"] = weights["Weight_Collision"]
         self.weights["w_dev"] = weights["Weight_Deviation"]
@@ -56,9 +56,16 @@ class TrajectoryScoring:
 
         # If there are best trajectories from the previous frame in the queue, add them to the trajectory list of the current frame.
         if self.best_trajectory_queue:
-            previous_best_trajectories = np.array(self.best_trajectory_queue)
+            # Convert previous best trajectories to NumPy (already done)
+            previous_best_trajectories = np.array([t.cpu().numpy() for t in self.best_trajectory_queue])
+
+            # Make sure pred_trajectories is also CPU and NumPy
+            if isinstance(pred_trajectories, torch.Tensor):
+                pred_trajectories = pred_trajectories.cpu().numpy()
+
+            # Now concatenate
             pred_trajectories = np.concatenate([previous_best_trajectories, pred_trajectories], axis=0)
-        
+
         # Calculate average speeds for each trajectory
         average_speeds = self.calculate_average_speeds(pred_trajectories)
 
@@ -71,26 +78,31 @@ class TrajectoryScoring:
             current_avg_speed = np.mean(average_speeds)
             self.speed_range = (0.8 * current_avg_speed, 1.2 * current_avg_speed)
 
+        collision_list = self.calculate_collisions_with_agents()
+
         scores = []
         for i, pred_traj in enumerate(pred_trajectories):
-            target_distance = self.calculate_distance_to_target(pred_traj.cpu(), target_point.cpu())
+            if isinstance(pred_traj, torch.Tensor):
+                pred_traj = pred_traj.cpu()
+            target_distance = self.calculate_distance_to_target(pred_traj, target_point.cpu())
             # Calculate the angle deviation of the current trajectory
-            angle_deviation_cost = self.calculate_angle_deviation(pred_traj.cpu(), pred_traj[0].cpu(), target_point.cpu())
-            collision = self.calculate_collisions_with_agents()[i]
-
+            angle_deviation_cost = self.calculate_angle_deviation(pred_traj, pred_traj[0], target_point.cpu())
+            print(i, collision_list)
+            collision = collision_list[i] # index out of list
+            
             # Calculate speed cost for the current trajectory
             speed_cost = self.calculate_speed_cost([average_speeds[i]], self.speed_range)[0]
 
             # Calculate dynamics for the trajectory
-            long_velocities, lat_velocities, long_accelerations, lat_accelerations, long_jerks, lat_jerks = self.calculate_dynamics(pred_traj.cpu())
+            long_velocities, lat_velocities, long_accelerations, lat_accelerations, long_jerks, lat_jerks = self.calculate_dynamics(pred_traj)
 
             # Calculate comfort costs
             lat_comfort = self.lat_comfort_cost(long_velocities, lat_velocities, long_accelerations, lat_jerks)
             lon_comfort = self.lon_comfort_cost(long_jerks)
 
             # Calculate centripetal acceleration cost for the current trajectory
-            speeds = self.calculate_speeds(np.expand_dims(pred_traj.cpu(), axis=0))[0]
-            centripetal_acceleration_cost = self.calculate_centripetal_acceleration_cost(pred_traj.cpu(), speeds)
+            speeds = self.calculate_speeds(np.expand_dims(pred_traj, axis=0))[0]
+            centripetal_acceleration_cost = self.calculate_centripetal_acceleration_cost(pred_traj, speeds)
 
             # Calculate total score
             total_score = ( weights['w_dis'] * target_distance +
@@ -141,19 +153,21 @@ class TrajectoryScoring:
         """
         for bbox in other_vehicles_bboxes:
             x_center, y_center, width, height, yaw = bbox
-            print(bbox)
-            # Create bounds for the bounding box
-            x_min = x_center - width / 2
-            x_max = x_center + width / 2
-            y_min = y_center - height / 2
-            y_max = y_center + height / 2
+            x_min = x_center - width/2
+            x_max = x_center + width/2
+            y_min = y_center - height/2
+            y_max = y_center + height/2
 
-            # Check each point in the trajectory
             for point in trajectory:
                 x, y, _ = point
+                # print(x,y)
+                # x, y = x.item(), y.item()
+
                 if x_min <= x <= x_max and y_min <= y <= y_max:
                     return True  # Collision detected
+
         return False  # No collision detected
+
     
     def calculate_collisions_with_agents(self):
         trajectories = self.sample['pred_ego_fut_trajs']
@@ -161,12 +175,15 @@ class TrajectoryScoring:
         collision_scores = []
         for traj in trajectories:
             collision = 0
+            # print("-------------AGENT BOXES__________")
+            # print(agent_boxes)
             for agent in agent_boxes:
 
-                print("--------------")
-                print(agent)
-                print("--------------")
-                agent_box = agent[0]
+                # print("--------------")
+                # print("AGEMT ")
+                # print(agent)
+                # print("--------------")
+                agent_box = agent
                 # Convert agent box format to [x_center, y_center, width, height, yaw]
                 bbox = [agent_box[0], agent_box[1], agent_box[2], agent_box[3], agent_box[4]]
                 if self.check_collision(traj, [bbox]):  # Check collision with each agent
@@ -181,7 +198,10 @@ class TrajectoryScoring:
         :param trajectories: Array of shape (num_trajectories, num_points, 2)
         :return: Array of average speeds of shape (num_trajectories,)
         """
-        speeds = self.calculate_speeds(trajectories.cpu())
+        if isinstance(trajectories, torch.Tensor):
+            trajectories = trajectories.cpu()
+
+        speeds = self.calculate_speeds(trajectories)
         average_speeds = np.mean(speeds, axis=1)
         return average_speeds
 
@@ -235,13 +255,18 @@ class TrajectoryScoring:
 
     def calculate_speed_cost(self, average_speeds, speed_range):
         # acording to the limitation of scenario setting speed or some shit
+        self.driving_scene = 'city' # <_ TODO help ??? ?
+
         if self.driving_scene == 'city':
-            speed_limit = self.default_city_road_speed_limit
+            speed_limit = 30 # TODO : FIX THIS s
+            # speed_limit = self.default_city_road_speed_limit
         elif self.driving_scene == 'highway':
             speed_limit = self.default_highway_speed_limit
         else:
             raise ValueError("Invalid driving scene type. Must be 'city' or 'highway'.")
+        
 
+        self.driving_style = 'conservative' # <TODO aspplase noafnbo
         speed_costs = []
         for speed in average_speeds:
             # if the speed exceed limit set the cost to inf

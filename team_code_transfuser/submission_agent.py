@@ -367,7 +367,7 @@ class SubmissionAgent(autonomous_agent.AutonomousAgent):
                                 [-np.sin(rad), np.cos(rad)]])
             # inverse
             degree_matrix = degree_matrix.T
-            cur_pred_wp = self.pred_wp[i].detach().cpu().numpy()[:, :2]  # (8, 2)
+            cur_pred_wp = self.pred_wp[i].detach().cpu().numpy()#[:, :2]  # (8, 2)
 
             transformed_wp = (degree_matrix @ cur_pred_wp.T).T
             pred_wp_transformed.append(transformed_wp)

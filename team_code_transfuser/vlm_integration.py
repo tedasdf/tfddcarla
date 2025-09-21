@@ -11,15 +11,22 @@ COMPLETIONS = '/api/chat'
 
 
 class q1(BaseModel):
-    Time: str = Field(..., description="Specify time of day in detail, e.g. '10:00 AM, mid-morning rush hour'")
-    Weather: str = Field(..., description="Describe the weather in full, e.g. 'Sunny with light clouds'")
-    Driving_Scenario: str = Field(..., description="Describe the road type and conditions, e.g. 'Highway with moderate traffic'")
-    Lane_Option: str = Field(..., description="Describe which lane is chosen and why, e.g. 'Left lane for overtaking slower cars'")
+    # Time: str = Field(..., description="Specify time of day in detail, e.g. '10:00 AM, mid-morning rush hour'")
+    # Weather: str = Field(..., description="Describe the weather in full, e.g. 'Sunny with light clouds'")
+    # Driving_Scenario: str = Field(..., description="Describe the road type and conditions, e.g. 'Highway with moderate traffic'")
+    # Lane_Option: str = Field(..., description="Describe which lane is chosen and why, e.g. 'Left lane for overtaking slower cars'")
+    Time: str
+    Weather: str
+    Driving_Scenario: str
+    Lane_Option: str
 
 class q2(BaseModel):
-    Traffic_Lights: str = Field(..., description="Traffic light state, e.g. 'Red light with countdown timer visible'")
-    Parked_Vehicles: str = Field(..., description="Describe number and placement, e.g. '3 cars parked closely along right side'")
-    Building_Proximity: str = Field(..., description="Describe closeness of buildings, e.g. 'Shops immediately adjacent to roadside'")
+#     Traffic_Lights: str = Field(..., description="Traffic light state, e.g. 'Red light with countdown timer visible'")
+#     Parked_Vehicles: str = Field(..., description="Describe number and placement, e.g. '3 cars parked closely along right side'")
+#     Building_Proximity: str = Field(..., description="Describe closeness of buildings, e.g. 'Shops immediately adjacent to roadside'")
+    Traffic_Lights: str
+    Parked_Vehicles: str
+    Building_Proximity: str
 
 class q3(BaseModel):
     Driving_Style: Literal["Aggressive", "Conservative"]
@@ -37,7 +44,7 @@ class q3(BaseModel):
 
 
 class VLM():
-    def __init__(self, model="llama3.2-vision:11b", memory=128):
+    def __init__(self, model="llama3.2-vision:11b", memory=3):
         self.query = ["Provided a detailed description of a driving scene from a set of car surround images with 6 perspectives, capturing the critical elements such as time of day, weather conditions, road environment, and available lane options.",
                       "Please list and frame the key objectives in the front view that will influence the next driving decision",
                       "Based on the previous description, should we drive conservatively or aggressively? What level and what score should we use?"
@@ -51,7 +58,9 @@ class VLM():
         payload = {"model": self.model,
                    "messages": messages,
                    "format": format,
-                   "stream": False
+                   "stream": False,
+                   "keep_alive": "30m",
+                   "num_predict": 50
                    }
         response = requests.post(URL + COMPLETIONS, json=payload)
         if response.status_code != 200:
@@ -100,10 +109,11 @@ class VLM():
              },
             ]
         )
-        
+        # print(self.messages)
         response = self.chat_model(format=q1.schema(), messages=self.messages)
         message = response['message']
-        # print(message['content'])
+        print("FIRST ")
+        print(message['content'])
         self.messages.append(message)
         responses.append(response)
 
@@ -111,7 +121,8 @@ class VLM():
         self.messages.append({'role': 'user', 'content': self.query[1]})
         response = self.chat_model(format=q2.schema(), messages=self.messages)
         message = response['message']
-        # print(message['content'])
+        print("SECOND ")
+        print(message['content'])
         self.messages.append(message)
         responses.append(response)
       
@@ -119,7 +130,8 @@ class VLM():
         self.messages.append({'role': 'user', 'content': self.query[2]})
         response = self.chat_model(format=q3.schema(), messages=self.messages)
         message = response['message']
-        # print(message['content'])
+        print("THIRD ")
+        print(message['content'])
         self.messages.append(message)
         responses.append(response)
 
@@ -154,16 +166,33 @@ if __name__ == '__main__':
     from PIL import Image
 
     vlm = VLM()
-    weights = WeightScore()
-
+    weights = {
+        "w_coll": 1.5,
+        "w_dev": 5.0,
+        "w_dis": 2.5,
+        "w_speed": 1.5,
+        "w_lat": 4.5,
+        "w_lon": 3.0,
+        "w_cent": 3.5
+    }
+    print("Starting image conversion")
     image = Image.open("./test_images/im1.png")
-    response = vlm.step(weights, image)
-    weights.update_weights(response)
+    downsampled_image = image.resize(
+        (image.width // 2, image.height // 2), 
+        Image.ANTIALIAS  # Smooth resizing
+    )
+    print("First response")
+    response = vlm.step(weights, downsampled_image)
+    # weights.update_weights(response)
     print(response)
     print("\n\n")
     image = Image.open("./test_images/im2.png")
-    response = vlm.step(weights, image)
-    weights.update_weights(response)
+    downsampled_image = image.resize(
+        (image.width // 2, image.height // 2), 
+        Image.ANTIALIAS  # Smooth resizing
+    )
+    response = vlm.step(weights, downsampled_image)
+    # weights.update_weights(response)
     print(response)
     
     

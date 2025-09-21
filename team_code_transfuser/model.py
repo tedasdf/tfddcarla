@@ -3,6 +3,7 @@ from path_gen.diffusiondrive.transfuser_model_v2 import TrajectoryHead
 import torch.nn.functional as F
 import cv2
 import math
+import pickle
 
 
 from path_gen.og import GRUDecoder
@@ -114,6 +115,10 @@ class LidarCenterNetHead(BaseDenseHead, BBoxTestMixin):
         self.test_cfg = test_cfg
         self.fp16_enabled = train_cfg.fp16_enabled
         self.i = 0
+
+        with open('output.pkl', 'w') as f:
+            pass
+        
 
     def _build_head(self, in_channel, feat_channel, out_channel):
         """Build head for each branch."""
@@ -588,6 +593,7 @@ class LidarCenterNet(nn.Module):
         self.use_target_point_image = config.use_target_point_image
         self.gru_concat_target_point = config.gru_concat_target_point
         self.use_point_pillars = config.use_point_pillars
+
         self.vlm = vlm_integration.VLM(config.model)
         self.trajectory_scorer = traj_eval.TrajectoryScoring()
         
@@ -730,6 +736,7 @@ class LidarCenterNet(nn.Module):
         # pred the wapoints in the vehicle coordinate and we convert it to lidar coordinate here because the GT waypoints is in lidar coordinate
         pred_wp[:, :, 0] = pred_wp[:, :, 0] - self.config.lidar_pos[0]
 
+
         pred_brake = None
         steer = None
         throttle = None
@@ -777,7 +784,7 @@ class LidarCenterNet(nn.Module):
 
         return steer, throttle, brake
 
-    def forward_ego(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=None, expert_waypoints=None,
+    def forward_ego(self, rgb, lidar_bev, target_point, target_point_image, ego_vel, ego_acc, theta, bev_points=None, cam_points=None, save_path=True, expert_waypoints=None,
                     stuck_detector=0, forced_move=False, num_points=None, rgb_back=None, debug=False):
 
         if (self.use_point_pillars == True):
@@ -925,7 +932,7 @@ class LidarCenterNet(nn.Module):
         bboxes, _ = results[0]
 
         # filter bbox based on the confidence of the prediction
-        bboxes = bboxes[bboxes[:, -1] > self.config.bb_confidence_threshold]
+        bboxes = bboxes[bboxes[:, -1] > self.config.bb_confidence_threshold + 0.2]
         rotated_bboxes = []
         for bbox in bboxes.detach().cpu().numpy():
             bbox = self.get_bbox_local_metric(bbox)
@@ -943,18 +950,37 @@ class LidarCenterNet(nn.Module):
         # path_visualiser.visualise_from_tensor(forward_pass['trajectory'])
         # self.visualize_model_io(save_path, self.i, self.config, rgb, lidar_bev, target_point,
         #                         pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
-        #                         pred_wp, pred_bev, pred_semantic, pred_depth, bboxes, self.device,
+        #                         
         #                         gt_bboxes=None, expert_waypoints=expert_waypoints, stuck_detector=stuck_detector, forced_move=forced_move)
 
         # CALL VLM WITH poses_reg TO DECIDE BEST PATH
+        # print("BEFORE VLM goes")
+        # print(bboxes)
+        return pred_wp[0], rotated_bboxes
         img_pil = to_pil_image(rgb[0].cpu().byte())  
+        print("DONE WITH OTHER VLM STARTs")
         response = self.vlm.step(self.trajectory_scorer.weights, img_pil)
         self.trajectory_scorer.update_weights(response)
-        self.trajectory_scorer.compute_scores(pred_wp, target_point, rotated_bboxes)
+        self.trajectory_scorer.compute_scores(pred_wp, target_point, bboxes)
         # return 0, 0
-        trajectory = self.trajectory_scorer.best_trajectory_queue.peek()
+        trajectory = self.trajectory_scorer.best_trajectory_queue[-1]
+        print("Candidate trajectories")
+        print(pred_wp.shape) # (20, 8 ,3)
+        print("VLM output trajectory")
+        print(trajectory.shape) # ( 1, 8 , 3)
+        print(self.trajectory_scorer.weights) # ??? 
 
-        return trajectory, rotated_bboxes
+        if save_path:
+            with open('output.pkl', 'a') as f:
+                f.write('Best Trajectory: ')
+                f.write(f'{trajectory}')
+                f.write('Predicted Trajectories: ')
+                f.write(f'{pred_wp}')
+                f.write('Weights: ')
+                f.write(f'{self.trajectory_scorer.weights}')
+                f.write('--------------------------------------')
+
+        return trajectory.unsqueeze(0), rotated_bboxes
 
     def forward(self, rgb, lidar_bev, ego_waypoint, target_point, ego_vel , ego_acc, theta ,target_point_image, bev, label, depth, semantic, num_points=None, save_path=None,
                 bev_points=None, cam_points=None):
@@ -1185,7 +1211,9 @@ class LidarCenterNet(nn.Module):
 
     # this is different
     def get_rotated_bbox(self, bbox):
+        print("PRINT WITH IN GET ROTATED BBOX ")
         x, y, w, h, yaw, speed, brake = bbox
+        print(bbox)
 
         bbox = np.array([[h,   w, 1],
                          [h,  -w, 1],
@@ -1202,7 +1230,8 @@ class LidarCenterNet(nn.Module):
 
         bbox = r1_to_world @ bbox.T
         bbox = bbox.T
-
+        print(bbox)
+        print("============================")
         return bbox, brake
 
     def draw_bboxes(self, bboxes, image, color=(255, 255, 255), brake_color=(0, 0, 255)):
